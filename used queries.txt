@@ -1,0 +1,48 @@
+// the create table posts query
+find it
+
+// to insert into the posts table
+INSERT INTO posts ( 
+			id, 
+			acceptedanswerid , 
+            answercount , 
+            body , 
+            closeddate , 
+            commentcount , 
+            communityowneddate , 
+            creationdate , 
+            favoritecount , 
+            lastactivitydate , 
+            lasteditdate , 
+            lasteditordisplayname , 
+            lasteditoruserid , 
+            owneruserid , 
+            parentid , 
+            posttypeid , 
+            score , 
+            tags , 
+            title , 
+            viewcount
+        ) 
+        VALUES (
+            4,
+            7,	
+            14,	
+            '<p>I want to use a <code>Track-Bar</code> to change a <code>Form</code>''s opacity.</p> <p>This is my code:</p> <pre class="lang-cs prettyprint-override"><code>decimal trans = trackBar1.Value / 5000; this.Opacity = trans; </code></pre> <p>When I build the application, it gives the following error:</p> <blockquote> <pre class="lang-none prettyprint-override"><code>Cannot implicitly convert type decimal to double </code></pre> </blockquote> <p>I have tried using <code>trans</code> and <code>double</code>, but then the <code>Control</code> doesn''t work. This code worked fine in a past VB.NET project.</p>' ,
+		    NULL,
+			5,  
+			'2012-10-31 16:42:47.213',
+			'2008-07-31 21:42:52.667',  
+			54,  
+			'2021-02-26 03:31:15.027',  
+			'2021-02-26 03:31:15.027',  
+			'Rich B',
+			3072350,  
+			8,  
+			0,  
+			1,  
+			718,  
+			'<c#><floating-point><type-conversion><double><decimal>',  
+			'How to convert a Decimal to a Double in C#?',  
+			57601
+		);
