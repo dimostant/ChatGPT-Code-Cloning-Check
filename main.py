@@ -24,7 +24,6 @@ str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
 #get data from StackOverflow API
 so_api_question = get_api_question(question_id)
 chatgpt_db.print_json_data(so_api_question) #indent=2) # make json handler?
-
 str_so_api_question = chatgpt_db.json_data_to_str(so_api_question)
 
 # #get data from StackOverflow Postgres Db
@@ -47,7 +46,7 @@ if compare_questions(str_so_api_question, str_so_api_question) == 1:
     print("identical questions")
     #ignore
 
-elif compare_questions(str_so_api_question, str_so_api_question) >= 0.7:
+elif compare_questions(str_so_api_question, str_so_api_question) >= 0.7 and compare_questions(str_so_api_question, str_so_api_question) < 1:
     print("similar questions")
 
     #compare answers codes code
