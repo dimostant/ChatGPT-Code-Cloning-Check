@@ -60,6 +60,7 @@ else:
 
 #ansers codes code
 so_api_answer = get_api_answer(question_id)
+print(so_api_answer)
 chatgpt_db.print_json_data(so_api_answer)
 
 print("\n devgpt code \n")
@@ -67,7 +68,7 @@ print("\n devgpt code \n")
 gpt_code = chatgpt_db.get_user_code(user_converstations, 0)
 chatgpt_db.print_json_data(gpt_code)
 
-
+    
 
 # while gpt_question != None: 
 # get them 100 by 100 to optimize the process, maybe 50? do optimal call of the api  
