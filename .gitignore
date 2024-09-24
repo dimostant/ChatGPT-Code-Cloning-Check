@@ -1,1 +1,4 @@
 laptop_codes.py
+.venv
+__pycache__
+ChatGBT_db/__pycache__
