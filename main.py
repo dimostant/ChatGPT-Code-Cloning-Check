@@ -76,14 +76,22 @@ inline_code_snippets = [code.get_text() for code in soup.find_all('code') if cod
 # Combine all extracted code snippets
 extracted_so_api_code = "\n".join(code_snippets + inline_code_snippets)
 
-tree1 = ast.parse(extracted_so_api_code)
+# tree1 = ast.parse(extracted_so_api_code)
 
 print("\n devgpt code \n")
 
-gpt_code = chatgpt_db.get_user_code(user_conversations, 0)
-chatgpt_db.print_json_data(gpt_code)
+gpt_answer_code_dictionary = chatgpt_db.get_user_code(user_conversations, 0)
+chatgpt_db.print_json_data(gpt_answer_code_dictionary)
 
+extracted_gpt_answer_code = "\n".join([block["Content"] for block in gpt_answer_code_dictionary])
 
+# tree2 = ast.parse(extracted_gpt_answer_code )
+
+# Output the combined code
+print("Extracted Code:\n")
+print(extracted_gpt_answer_code)
+
+# tree1 = ast.parse(extracted_s)
 
 
 
