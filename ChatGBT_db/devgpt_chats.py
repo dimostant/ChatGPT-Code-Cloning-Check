@@ -11,18 +11,18 @@ def get_json_data(file_path):
     with open(file_path) as file:
         return json.load(file)
 
-def get_user_converstations(json_data, user):
-    user_conversations = json_data["Sources"][user]["ChatgptSharing"][0]["Conversations"]
+def get_user_conversation(json_data, user, conversation):
+    user_conversations = json_data["Sources"][user]["ChatgptSharing"][0]["Conversations"][conversation]
     return user_conversations  
 
-def get_user_question(user_conversations, conversation):   
-    question = user_conversations[conversation]["Prompt"] 
+def get_conversation_question(user_conversation):
+    question = user_conversation["Prompt"]
     return question
 
-def get_user_answer(user_conversations, conversation):
-    answer = user_conversations[conversation]["Answer"] 
+def get_conversation_answer(user_conversation):
+    answer = user_conversation["Answer"]
     return answer
 
-def get_user_code(user_conversations, conversation):
-    code = user_conversations[conversation]["ListOfCode"]
+def get_conversation_code(user_conversation):
+    code = user_conversation["ListOfCode"]
     return code

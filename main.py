@@ -16,11 +16,12 @@ path = 'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.
 
 #get data from DevGPT
 json_data = chatgpt_db.get_json_data(path) # optimize db interface? #just use json.dumps
-user_conversations = chatgpt_db.get_user_converstations(json_data, user)
+conversation = chatgpt_db.get_user_conversation(json_data, user, 0)
 
-gpt_question = chatgpt_db.get_user_question(user_conversations, 0)
+gpt_question = chatgpt_db.get_conversation_question(conversation)
 str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
 print("DevGPT        question :", str_gpt_question)
+
 
 #get data from StackOverflow API
 so_api_question = get_api_question(question_id) # make json handler?
