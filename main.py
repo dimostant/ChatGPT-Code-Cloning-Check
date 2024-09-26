@@ -1,19 +1,20 @@
 import ChatGBT_db.devgpt_chats as chatgpt_db
 from so_api import get_api_question, get_api_answer #change to importing the entire file?
 from so_postgres import get_so_postgres_question
+
 from compare import compare_questions
-import ast
-from bs4 import BeautifulSoup
+from code_handling import extract_html_code, extract_dictionary_code
 
 #inputs
-question_id = 4 #can also be an array of ids
+question_id = 79018992 #can also be an array of ids
 user = 1
 path = 'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json'
-
 
 #figure out in what sequence to get DevGPT questions and StackOverflow api questions
 #check date of stackoverflow data to be before the release of ChatGPT
 #filter for what programming the question is about, maybe use the tags from stackoverflow and the answer too for both
+#is there a use for the text of the answers?
+#include comments
 
 #get data from DevGPT
 json_data = chatgpt_db.get_json_data(path) # optimize db interface? #just use json.dumps
@@ -22,8 +23,6 @@ user_conversations = chatgpt_db.get_user_converstations(json_data, user)
 gpt_question = chatgpt_db.get_user_question(user_conversations, 0)
 chatgpt_db.print_json_data(gpt_question)
 str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
-
-# gpt_answer = chatgpt_db.get_user_answer(user_conversations, 0) # gpt_code = chatgpt_db.get_user_code(user_conversations, 0)
 
 #get data from StackOverflow API
 so_api_question = get_api_question(question_id)
@@ -36,10 +35,11 @@ str_so_api_question = chatgpt_db.json_data_to_str(so_api_question)
 
 #compare different questions test case
 
-if compare_questions(str_so_api_question , str_gpt_question) >= 0.7:
-    print("similar questions")
-else:
-    print("different questions")
+
+# if compare_questions(str_so_api_question , str_gpt_question) >= 0.7:
+#     print("similar questions")
+# else:
+#     print("different questions")
 
 #compare similar or same questions
 
@@ -59,41 +59,31 @@ elif 0.7 <= compare_questions(str_so_api_question, str_so_api_question) < 1:
 else:
     print("different questions")
 
+print("\n so api code \n")
+
 #answers codes code
 so_api_answer_body = get_api_answer(question_id)
-print(so_api_answer_body)
-chatgpt_db.print_json_data(so_api_answer_body)
+#chatgpt_db.print_json_data(so_api_answer_body)
+so_api_answer_code = extract_html_code(so_api_answer_body)
+print(so_api_answer_code)
 
-# Parse the HTML content
-soup = BeautifulSoup(chatgpt_db.json_data_to_str(so_api_answer_body), 'html.parser')
-
-# Find all code snippets inside <pre><code> tags
-code_snippets = [pre.get_text() for pre in soup.find_all('pre')]
-
-# Find all inline code snippets inside <code> tags not within <pre>
-inline_code_snippets = [code.get_text() for code in soup.find_all('code') if code.parent.name != 'pre'] #needs testing, e.g <pre><code>1<code>2</code>3</pre></code>, is it in order?
-
-# Combine all extracted code snippets
-extracted_so_api_code = "\n".join(code_snippets + inline_code_snippets)
-
-# tree1 = ast.parse(extracted_so_api_code)
+#needs a function that cleans the string of irrelevant to the code text that is left over
+#insert code to abstract syntax tree (python code only!)
+#tree1 = ast.parse(extracted_so_api_code)
 
 print("\n devgpt code \n")
 
-gpt_answer_code_dictionary = chatgpt_db.get_user_code(user_conversations, 0)
-chatgpt_db.print_json_data(gpt_answer_code_dictionary)
+gpt_answer_dictionary = chatgpt_db.get_user_code(user_conversations, 0) #is this json or string?
+# chatgpt_db.print_json_data(gpt_answer_code_dictionary)
 
-extracted_gpt_answer_code = "\n".join([block["Content"] for block in gpt_answer_code_dictionary])
+#extract blocks of code to a string with \n and cleanup irrelavant information to the code
+gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
+print(gpt_answer_code)
 
+#needs a function that cleans the string of irrelevant to the code text that is left over
+
+#insert code to abstract syntax tree (python code only!)
 # tree2 = ast.parse(extracted_gpt_answer_code )
-
-# Output the combined code
-print("Extracted Code:\n")
-print(extracted_gpt_answer_code)
-
-# tree1 = ast.parse(extracted_s)
-
-
 
 # while gpt_question != None: 
 # get them 100 by 100 to optimize the process, maybe 50? do optimal call of the api  
