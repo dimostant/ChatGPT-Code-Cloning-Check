@@ -3,7 +3,7 @@ from nltk.tokenize import word_tokenize
 
 def compare_questions(api_question, gpt_question):
       
-    print("comparing : " + api_question + " and " + gpt_question)
+    print("\ncomparing :\n" + api_question + "\n" + gpt_question)
     
     x_list = word_tokenize(api_question)
     y_list = word_tokenize(gpt_question)
