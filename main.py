@@ -4,14 +4,12 @@ from compare_process import compare_process
 #inputs
 question_id = [79018992] #must be array
 user = 1
-#user_conversation
+#user_conversation??
 path = 'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json'
 
 #get data from DevGPT
-json_data = chatgpt_db.get_json_data(path) # optimize db interface? #just use json.dumps
+DevGPT_data = chatgpt_db.get_json_data(path) # optimize db interface? #just use json.dumps
 
-#investigate if it is needed to include Extra DevGPT db data
-gpt_conversation = chatgpt_db.get_user_conversation(json_data, user, 0)
 
 #figure out in what sequence to get DevGPT questions and StackOverflow api questions
 #check date of stackoverflow data to be before the release of ChatGPT
@@ -31,12 +29,18 @@ gpt_conversation = chatgpt_db.get_user_conversation(json_data, user, 0)
 #filter the question from the coding language tags, must be e.g. Python
 #extra code that confirms its python
 
-#for conversation in conversations:
-#somehow traverse through all DevGPT conversations
+for source in DevGPT_data.get("Sources", []):
+    chatgpt_sharing = source.get("ChatgptSharing", [])
+    for sharing_data in chatgpt_sharing: #this index will always be 0 should i remove? # this is for safety
+        conversations = sharing_data.get("Conversations", [])
+        for conversation in conversations:
+            chatgpt_db.print_json_data(conversation)
+
+
 #must be Python
 
 #compare so_api_questions argument, gpt_question
-compare_process(question_id, gpt_conversation)
+#compare_process(question_id, gpt_conversation)
 
 #identical case [questionId],[gpt_conversation]
 #different case [questionId],[gpt_conversation]
