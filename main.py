@@ -1,8 +1,8 @@
 import ChatGBT_db.devgpt_chats as chatgpt_db
-from compare_process import compare_process
+from compare_processes import compare_process
 
 #inputs
-question_id = [79018992] #must be array
+question_id = [79018992] #must be arr
 user = 1
 #user_conversation??
 path = 'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json'
@@ -28,19 +28,25 @@ DevGPT_data = chatgpt_db.get_json_data(path) # optimize db interface? #just use 
 #question not empty
 #filter the question from the coding language tags, must be e.g. Python
 #extra code that confirms its python
+#remove non utf8 from json
 
-for source in DevGPT_data.get("Sources", []):
-    chatgpt_sharing = source.get("ChatgptSharing", [])
-    for sharing_data in chatgpt_sharing: #this index will always be 0 should i remove? # this is for safety
-        conversations = sharing_data.get("Conversations", [])
-        for conversation in conversations:
-            chatgpt_db.print_json_data(conversation)
+# gpt_conversation = ""
+
+# for source in DevGPT_data.get("Sources", []):
+#     chatgpt_sharing = source.get("ChatgptSharing", [])
+#     for sharing_data in chatgpt_sharing: #this index will always be 0 should i remove? # this is for safety
+#         conversations = sharing_data.get("Conversations", [])
+#         for conversation in conversations:
+#             gpt_conversation = conversation
+#             chatgpt_db.print_json_data(conversation)
+
 
 
 #must be Python
 
 #compare so_api_questions argument, gpt_question
-#compare_process(question_id, gpt_conversation)
+gpt_conversation = chatgpt_db.get_user_conversation(DevGPT_data, user, 0)
+compare_process(question_id, gpt_conversation)
 
 #identical case [questionId],[gpt_conversation]
 #different case [questionId],[gpt_conversation]
