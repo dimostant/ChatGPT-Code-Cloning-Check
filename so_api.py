@@ -11,6 +11,6 @@ def get_api_question(list_of_ids):
 
 def get_api_answer(list_of_ids, order = 'desc', sort = 'activity'):
     api_questions = SITE.fetch('questions/{ids}/answers', ids = list_of_ids, filter = '!nNPvSNdWme') 
-    api_question = api_questions["items"][0]["body"]
+    api_questions = api_questions["items"]#[0]["body"]
 
-    return api_question
+    return api_questions
