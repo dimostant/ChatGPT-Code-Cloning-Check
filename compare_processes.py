@@ -1,8 +1,9 @@
 import ast
 
+from cloning import code_cloning_check
 from code_handling import extract_html_code, extract_dictionary_code, remove_non_utf8_chars
 import ChatGBT_db.devgpt_chats as chatgpt_db
-from so_api import get_api_question, get_api_answer  #change to importing the entire file?
+from so_api import get_api_question, get_api_answers  #change to importing the entire file?
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -44,20 +45,6 @@ def compare_questions(api_question, gpt_question):
     return cosine
 
 def compare_answers(so_question_id, gpt_conversation): #might change to answers
-    print("so api code \n")
-    #answer MUST contain code, or ignored
-    # must be Python
-    so_api_answers_body = get_api_answer(so_question_id)#put this out of the function?
-    for so_api_answer_body in so_api_answers_body:
-        so_api_answer_code = extract_html_code(so_api_answer_body)
-        so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
-        print(so_api_answer_clean_code)
-
-    # needs a function that cleans the string of irrelevant to the code text that is left over
-
-    # insert code to abstract syntax tree (python code only!)
-    # tree1 = ast.parse(extracted_so_api_code)
-
     print("DevGPT code \n")
     gpt_answer_dictionary = chatgpt_db.get_conversation_code(gpt_conversation)
     # extract blocks of code to a string with \n and cleanup irrelevant information to the code
@@ -68,6 +55,26 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
 
     # insert code to abstract syntax tree (python code only!)
     #tree2 = ast.parse(gpt_answer_clean_code)
+
+    print("so api code \n")
+    #answer MUST contain code, or ignored
+    # must be Python
+    #travers through api received answers of a question, TODO: take only the one with the most votes
+    so_api_answers_body = get_api_answers(so_question_id)#put this out of the function?
+    for item in so_api_answers_body.get('items', []):
+        so_api_answer_body = item.get("body")
+        if so_api_answer_body is not None:
+            so_api_answer_code = extract_html_code(so_api_answer_body)
+            so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
+            print(so_api_answer_clean_code)
+
+            code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
+
+    # needs a function that cleans the string of irrelevant to the code text that is left over
+    # insert code to abstract syntax tree (python code only!)
+    # tree1 = ast.parse(extracted_so_api_code)
+
+
 
     #if (answerA code for cloning answerB) print("cloning")
     #ramp of how much the code matches, 1 to 0.7/ 0.69 to 0.3/ 0.29 to 0 and categorize, where will this be stored?

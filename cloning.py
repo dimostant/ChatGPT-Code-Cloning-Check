@@ -7,6 +7,10 @@ from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
 from requests.exceptions import ConnectTimeout, HTTPError
 
+def code_cloning_check(gpt_answer__code, so_api_answer__code):
+    print("cloning or not cloning idk lmao!!!!...")
+
+
 def get_webpage_text(url):
     url = url.lstrip('\ufeff')
     try:

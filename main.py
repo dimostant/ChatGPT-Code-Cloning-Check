@@ -32,9 +32,9 @@ for source in DevGPT_data.get("Sources", []):
     chatgpt_sharing = source.get("ChatgptSharing", [])
     for sharing_data in chatgpt_sharing: #this index will always be 0 should i remove? # this is for safety
         conversations = sharing_data.get("Conversations", [])
-        for conversation in conversations:
+        for conversation in conversations: #is this safe if no conversation exists?
             gpt_conversation = conversation
-            chatgpt_db.print_json_data(conversation)
+            #chatgpt_db.print_json_data(conversation)
             #filter for python
 
 
