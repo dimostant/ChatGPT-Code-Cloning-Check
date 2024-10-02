@@ -8,6 +8,7 @@ from difflib import SequenceMatcher
 from requests.exceptions import ConnectTimeout, HTTPError
 
 def code_cloning_check(gpt_answer__code, so_api_answer__code):
+    print("cpmparing :", gpt_answer__code, "and :", so_api_answer__code)
     print("cloning or not cloning idk lmao!!!!...")
 
 
