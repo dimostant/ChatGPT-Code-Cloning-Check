@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
 from requests.exceptions import ConnectTimeout, HTTPError
 
-def code_cloning_check(gpt_answer__code, so_api_answer__code):
-    print("cpmparing :", gpt_answer__code, "and :", so_api_answer__code)
+def code_cloning_check(gpt_answer_code, so_api_answer_code):
+    print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
     print("cloning or not cloning idk lmao!!!!...")
 
 

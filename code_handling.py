@@ -15,10 +15,17 @@ def is_valid_python_code(code):
         # If there is a syntax error, it means the code is not valid Python
         return False
 
+def extract_html_text(body):
+    body_to_str = chatgpt_db.json_data_to_str(body)
+    soup = bs4.BeautifulSoup(body_to_str, 'html.parser')
+    text = soup.get_text()
+
+    return text
 
 def extract_html_code(body):
     # Parse the HTML content
-    soup = bs4.BeautifulSoup(chatgpt_db.json_data_to_str(body), 'html.parser')
+    body_to_str = chatgpt_db.json_data_to_str(body)
+    soup = bs4.BeautifulSoup(body_to_str, 'html.parser')
 
     # Find all code snippets inside <pre><code> tags
     code_snippets = [pre.get_text() for pre in soup.find_all('pre')]

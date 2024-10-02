@@ -1,20 +1,20 @@
 from cloning import code_cloning_check
-from code_handling import extract_html_code, extract_dictionary_code, remove_non_utf8_chars
+from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars
 import ChatGBT_db.devgpt_chats as chatgpt_db
 #from so_api import get_api_questions, get_api_answers  #change to importing the entire file?
-
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import ast
 
 def compare_questions(api_question, gpt_question):
-    print("\ncomparing :\n" + api_question + "\n" + gpt_question)
+    #print removing the \n and replacing with " " for ease
+    print("\ncomparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
 
     x_list = word_tokenize(api_question)
     y_list = word_tokenize(gpt_question)
 
     sw = stopwords.words('english')
-    l1 = [];
+    l1 = []#;
     l2 = []
 
     x_set = {w for w in x_list if not w in sw}
@@ -43,7 +43,7 @@ def compare_questions(api_question, gpt_question):
     return cosine
 
 def compare_answers(so_question_id, gpt_conversation): #might change to answers
-    print("DevGPT code \n")
+    #print("DevGPT code \n")
     gpt_answer_dictionary = chatgpt_db.get_conversation_code(gpt_conversation)
     # extract blocks of code to a string with \n and cleanup irrelevant information to the code
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
@@ -54,9 +54,10 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
     # insert code to abstract syntax tree (python code only!)
     #tree2 = ast.parse(gpt_answer_clean_code)
 
-    print("so api code \n")
+    #print("so api code \n")
     #answer MUST contain code, or ignored
     # must be Python
+    # TODO: ADD SLEEP SO YOU DONT HIT THE THROTTLE AGAIN
     #travers through api received answers of a question, TODO: take only the one with the most votes
     # so_api_answers_body = get_api_answers(so_question_id)#put this out of the function?
     # for item in so_api_answers_body.get('items', []):
@@ -68,7 +69,7 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
     #
     #         code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
 
-    answers = ["code1, code2"]
+    answers = ["code1", "code2"]
     for so_api_answer_clean_code in answers:
         code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
 
@@ -85,50 +86,61 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
 #invent a function that can detect the kind of question, and get the appropriate answers e.t.c accordingly
 def compare_process (so_question_id, dev_gpt_data):
     # so_api_question = get_api_questions(so_question_id)  # make json handler?
-    #     # str_so_api_question = chatgpt_db.json_data_to_str(so_api_question)
-    #     # str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
 
-    str_so_api_clean_question = "how to get sum money"#delete
-    print("StackOverflow question :", str_so_api_clean_question)
+    #only for testing
+    path = 'so_api_questions.json'
+    so_api_data = chatgpt_db.get_json_data(path)
 
-    counter = 0 #delete after testing
+    for item in so_api_data.get("items", []):
+        #print(item)
+        #consider title, should the contexts of the questions even be checked before comparing code??
+        so_api_question = item["body"] #improve?
+        str_so_api_question = extract_html_text(so_api_question) #test if this is right
+        str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
 
-    for source in dev_gpt_data.get("Sources", []):
-        for sharing_data in source.get("ChatgptSharing", []):
-            for gpt_conversation in sharing_data.get("Conversations", []): #is this safe if no conversation exists? #this index will always be 0 should I remove? # this is for safety
-                #chatgpt_db.print_json_data(gpt_conversation)
-                gpt_question = chatgpt_db.get_conversation_question(gpt_conversation)
-                str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
-                #check for chinese characters and skip question
-                print("DevGPT        question :", str_gpt_question)
-                counter = counter + 1
-                print(counter)
-                #filter for python
+        #TODO: ADD SLEEP SO YOU DONT HIT THE THROTTLE AGAIN
+        #str_so_api_question = chatgpt_db.json_data_to_str(so_api_question) #for title?
+        #str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
+        #print("StackOverflow question :", str_so_api_clean_question)
 
-    # #get data from StackOverflow Postgres Db
-    # so_postgres_question = get_so_postgres_question()
-    # print(so_postgres_question)
+        counter = 0 #delete after testing
 
-    # might need to compare the context of the questions, not only the title
-    # should the contexts of the questions even be checked before comparing code??
-                #similarity = compare_questions(str_so_api_clean_question, str_gpt_question)
+        for source in dev_gpt_data.get("Sources", []):
+            for sharing_data in source.get("ChatgptSharing", []):
+                for gpt_conversation in sharing_data.get("Conversations", []): #is this safe if no conversation exists? #this index will always be 0 should I remove? # this is for safety
+                    gpt_question = chatgpt_db.get_conversation_question(gpt_conversation)
+                    str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
+                    #check for chinese characters and skip question
+                    #print("DevGPT        question :", str_gpt_question)
 
-                similarity = 0.7
+                    counter = counter + 1
+                    #print(counter)
+                    #filter for python
 
-                if similarity == 1:
-                    print("identical questions\n")
-                    #ignore #is that right?
+                    # #get data from StackOverflow Postgres Db
+                    # so_postgres_question = get_so_postgres_question()
+                    # print(so_postgres_question)
 
-                elif 0.7 <= similarity < 1:
-                    print("similar questions, checking...\n")
-                    #compare_answers(so_question_id, gpt_conversation)
 
-                else:
-                    print("different questions\n")
+                    similarity = compare_questions(str_so_api_clean_question, str_gpt_question)
 
-        if counter == 5:
-            print("break")
-            break
+                    similarity = 0.7
+
+                    if similarity == 1:
+                        print("identical questions\n")
+                        #ignore #is that right?
+
+                    elif 0.7 <= similarity < 1:
+                        #print("similar questions, checking...\n")
+                        compare_answers(so_question_id, gpt_conversation)
+
+                    else:
+                        print("different questions\n")
+            #  inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out.
+            # "if" checks out the loop so need <=
+            if counter >= 3:
+               #print("break")
+                break
 
 
 #inputs
