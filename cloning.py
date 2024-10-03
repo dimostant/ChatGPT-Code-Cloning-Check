@@ -11,7 +11,6 @@ def code_cloning_check(gpt_answer_code, so_api_answer_code):
     print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
     print("cloning or not cloning idk lmao!!!!...")
 
-
 # def get_webpage_text(url):
 #     url = url.lstrip('\ufeff')
 #     try:

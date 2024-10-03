@@ -1,0 +1,47 @@
+{
+  "items": [
+    {
+      "owner": {
+        "account_id": 1251828,
+        "reputation": 1751,
+        "user_id": 1212100,
+        "user_type": "registered",
+        "accept_rate": 76,
+        "profile_image": "https://i.sstatic.net/LmSgN.jpg?s=256",
+        "display_name": "karavanjo",
+        "link": "https://stackoverflow.com/users/1212100/karavanjo"
+      },
+      "is_accepted": true,
+      "score": 4,
+      "last_activity_date": 1658101245,
+      "last_edit_date": 1658101245,
+      "creation_date": 1576253085,
+      "answer_id": 59326069,
+      "question_id": 59325633,
+      "content_license": "CC BY-SA 4.0",
+      "body": "<p>Simple component for your requirement would look like this:</p>\n<pre><code>&lt;template&gt;\n  &lt;div class=&quot;header&quot;&gt;{{ word }}&lt;/div&gt;\n&lt;/template&gt;\n\n&lt;script&gt;\nconst words = [&quot;jacket&quot;, &quot;umbrella&quot;, &quot;sunscreen&quot;, &quot;sunglasses&quot;, &quot;air cooler&quot;];\n\nexport default {\n  name: &quot;HelloWorld&quot;,\n\n  data: function() {\n    return {\n      word: &quot;&quot;\n    };\n  },\n\n  methods: {\n    updateWord: function() {\n      this.word = words[Math.floor(Math.random() * words.length)];\n    }\n  },\n\n  mounted: function() {\n    this.updateWord();\n    setInterval(this.updateWord, 5000);\n  }\n};\n&lt;/script&gt;\n</code></pre>\n<p>Working example <a href=\"https://codesandbox.io/s/vue-array-random-xzlor?fontsize=14&amp;hidenavigation=1&amp;theme=dark\" rel=\"nofollow noreferrer\">here</a>.<br />\nAnd take a look at the Vue documentation at <a href=\"https://v2.vuejs.org/v2/guide\" rel=\"nofollow noreferrer\">here</a>, please.</p>\n"
+    },
+    {
+      "owner": {
+        "account_id": 8618523,
+        "reputation": 11,
+        "user_id": 6454410,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/f7b4c65e74e5b8ac9f4a32b512b5f415?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Matt",
+        "link": "https://stackoverflow.com/users/6454410/matt"
+      },
+      "is_accepted": false,
+      "score": 1,
+      "last_activity_date": 1618936358,
+      "creation_date": 1618936358,
+      "answer_id": 67182885,
+      "question_id": 59325633,
+      "content_license": "CC BY-SA 4.0",
+      "body": "<p>For those that just want to loop through the words.</p>\n<pre><code>&lt;div&gt;{{words[i}}&lt;/div&gt;\n\n data() {\n    return {\n      words: [&quot;jacket&quot;, &quot;umbrella&quot;, &quot;sunscreen&quot;, &quot;sunglasses&quot;, &quot;air cooler&quot;],\n      i: 0\n    }\n  },\n  mounted() {\n    setInterval(() =&gt; {\n      if (this.i &lt; this.words.length-1) this.i++\n      else this.i = 0\n    },5000)\n  }\n\n</code></pre>\n"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 10000,
+  "quota_remaining": 9991
+}

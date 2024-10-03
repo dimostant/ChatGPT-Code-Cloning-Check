@@ -8,7 +8,7 @@ import ast
 
 def compare_questions(api_question, gpt_question):
     #print removing the \n and replacing with " " for ease
-    print("\ncomparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
+    #print("\ncomparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
 
     x_list = word_tokenize(api_question)
     y_list = word_tokenize(gpt_question)
@@ -58,20 +58,21 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
     #answer MUST contain code, or ignored
     # must be Python
     # TODO: ADD SLEEP SO YOU DONT HIT THE THROTTLE AGAIN
+
+    #only for testing
+    questions_path = 'so_api_answers.json'
+    so_api_answers_body = chatgpt_db.get_json_data(questions_path)
+
     #travers through api received answers of a question, TODO: take only the one with the most votes
     # so_api_answers_body = get_api_answers(so_question_id)#put this out of the function?
-    # for item in so_api_answers_body.get('items', []):
-    #     so_api_answer_body = item.get("body")
-    #     if so_api_answer_body is not None:
-    #         so_api_answer_code = extract_html_code(so_api_answer_body)
-    #         so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
-    #         #print("api answer: ", so_api_answer_clean_code)
-    #
-    #         code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
 
-    answers = ["code1", "code2"]
-    for so_api_answer_clean_code in answers:
-        code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
+    for item in so_api_answers_body.get('items', []):
+        so_api_answer_body = item["body"]
+        if so_api_answer_body is not None:
+            so_api_answer_code = extract_html_code(so_api_answer_body)
+            so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
+            #print("api answer: ", so_api_answer_clean_code)
+            code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
 
     # needs a function that cleans the string of irrelevant to the code text that is left over
     # insert code to abstract syntax tree (python code only!)
@@ -88,8 +89,8 @@ def compare_process (so_question_id, dev_gpt_data):
     # so_api_question = get_api_questions(so_question_id)  # make json handler?
 
     #only for testing
-    path = 'so_api_questions.json'
-    so_api_data = chatgpt_db.get_json_data(path)
+    questions_path = 'so_api_questions.json'
+    so_api_data = chatgpt_db.get_json_data(questions_path)
 
     for item in so_api_data.get("items", []):
         #print(item)
@@ -105,6 +106,7 @@ def compare_process (so_question_id, dev_gpt_data):
 
         counter = 0 #delete after testing
 
+        #TODO: check for empty boxes everywhere
         for source in dev_gpt_data.get("Sources", []):
             for sharing_data in source.get("ChatgptSharing", []):
                 for gpt_conversation in sharing_data.get("Conversations", []): #is this safe if no conversation exists? #this index will always be 0 should I remove? # this is for safety
@@ -121,10 +123,9 @@ def compare_process (so_question_id, dev_gpt_data):
                     # so_postgres_question = get_so_postgres_question()
                     # print(so_postgres_question)
 
-
                     similarity = compare_questions(str_so_api_clean_question, str_gpt_question)
 
-                    similarity = 0.7
+                    similarity = 0.8
 
                     if similarity == 1:
                         print("identical questions\n")
