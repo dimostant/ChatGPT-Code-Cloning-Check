@@ -62,7 +62,6 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
         # so_api_answers_json = get_api_answers(so_question_id) #put this out of the function?
         # TODO: take only the one with the most votes
 
-
         for item in so_api_answers_json.get('items', []) or []:
            if item.get("body"):
                 so_api_answer_body = item["body"]
@@ -70,14 +69,13 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
                 so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
                 # print("api code: ", so_api_answer_clean_code)
 
+                code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
                 # compare answer context?
                 # TODO: needs a function that cleans the string of irrelevant to the code text that is left over
-                code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
+                # TODO: if (answerA code for cloning answerB) print("cloning")
+                # TODO: ramp of how much the code matches, 1 to 0.7/ 0.69 to 0.3/ 0.29 to 0 and categorize, where will this be stored?
+                # TODO: cloning Code comparison and result extraction, then store the results in CSV or JSON and in what structure
 
-
-        # TODO: if (answerA code for cloning answerB) print("cloning")
-        # ramp of how much the code matches, 1 to 0.7/ 0.69 to 0.3/ 0.29 to 0 and categorize, where will this be stored?
-        # cloning Code comparison and result extraction, then store the results in CSV or JSON and in what structure
 
 # invent a function that can detect the kind of question, and get the appropriate answers e.t.c accordingly
 def compare_process (so_question_id, dev_gpt_data):
