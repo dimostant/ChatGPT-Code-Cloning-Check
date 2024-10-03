@@ -6,7 +6,7 @@ def json_data_to_str(json_data):
 def print_json_data(json_data):
     print(json.dumps(json_data))
 
-#get data from json file and return it in usable format, always include
+# get data from json file and return it in usable format, always include
 def get_json_data(file_path):
     with open(file_path) as file:
         return json.load(file)

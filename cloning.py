@@ -1,14 +1,17 @@
-#to use the code from the refference
-#to be well tested
-
 #import pandas as pd
 #import requests
 #from bs4 import BeautifulSoup
 #from difflib import SequenceMatcher
 #from requests.exceptions import ConnectTimeout, HTTPError
 
+#to use the code from the refference
+#to be well tested
+
 def code_cloning_check(gpt_answer_code, so_api_answer_code):
     print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
+    # insert code to abstract syntax tree (python code only!)??
+    # tree1 = ast.parse(extracted_so_api_code)
+    # tree2 = ast.parse(gpt_answer_clean_code)
     print("cloning or not cloning idk lmao!!!!...")
 
 # def get_webpage_text(url):

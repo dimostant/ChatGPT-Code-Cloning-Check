@@ -30,11 +30,11 @@ def extract_html_code(body):
     # Find all code snippets inside <pre><code> tags
     code_snippets = [pre.get_text() for pre in soup.find_all('pre')]
 
-    # need to check the order of the concat
+    # TODO: need to check the order of the concat
     # Find all inline code snippets inside <code> tags not within <pre>
-    #inline_code_snippets = [code.get_text() for code in soup.find_all('code') if code.parent.name != 'pre']
-    # needs testing, e.g <pre><code>1<code>2</code>3</pre></code>, is it in order?
-    #probably not needed needs testing
+    # inline_code_snippets = [code.get_text() for code in soup.find_all('code') if code.parent.name != 'pre']
+    # TODO: needs testing, e.g <pre><code>1<code>2</code>3</pre></code>, is it in order?
+    # probably not needed needs testing
 
     # Combine all extracted code snippets
     code = "\n".join(code_snippets)#  + inline_code_snippets) #this relates to the line 78 issue
@@ -47,16 +47,16 @@ def extract_dictionary_code(dictionary):
 
 
 def remove_non_utf8_chars(text):
-    # Step 1: Unescape any HTML entities
+    # Unescape any HTML entities
     unescaped_text = html.unescape(text)
 
-    # Step 2: Decode Unicode escape sequences to actual characters
+    # Decode Unicode escape sequences to actual characters
     try:
         decoded_text = unescaped_text.encode().decode('unicode_escape')
     except (UnicodeDecodeError, AttributeError):
         decoded_text = unescaped_text  # Fall back to original if decoding fails
 
-    # Step 3: Use regex to remove non-ASCII and non-basic Unicode characters
+    # Use regex to remove non-ASCII and non-basic Unicode characters
     clean_text = re.sub(r'[^\x00-\x7F]+', '', decoded_text)
 
     return clean_text

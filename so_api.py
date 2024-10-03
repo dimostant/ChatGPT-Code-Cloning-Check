@@ -1,6 +1,6 @@
 from stackapi import StackAPI
 
-#https://api.stackexchange.com/docs/
+# https://api.stackexchange.com/docs/
 SITE = StackAPI('stackoverflow')
 
 def get_api_questions(list_of_ids):
