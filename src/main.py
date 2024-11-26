@@ -56,7 +56,7 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
         # TODO: ADD SLEEP SO YOU DONT HIT THE THROTTLE AGAIN
 
         # only for testing #modify for multiple answers
-        answers_path = 'so_api_answers.json'
+        answers_path = 'StackOverflow_api_db/so_api_answers.json'
         so_api_answers_json = chatgpt_db.get_json_data(answers_path)
 
         # so_api_answers_json = get_api_answers(so_question_id) #put this out of the function?
@@ -78,7 +78,7 @@ def compare_answers(so_question_id, gpt_conversation): #might change to answers
 
 # invent a function that can detect the kind of question, and get the appropriate answers e.t.c accordingly
 def compare_process (so_question_id, dev_gpt_data):
-    questions_path = 'so_api_questions.json'  # only for testing
+    questions_path = 'StackOverflow_api_db/so_api_questions.json'  # only for testing
     so_api_questions_json = chatgpt_db.get_json_data(questions_path)
 
     # so_api_questions_json = get_api_questions(so_question_id)
@@ -135,7 +135,8 @@ def compare_process (so_question_id, dev_gpt_data):
 question_id = [59325633]
 
 #get data from DevGPT
-dev_gpt_json = chatgpt_db.get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json')
+dev_gpt_json = chatgpt_db.get_json_data(
+    'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json')
 
 #compare_process(question_id, dev_gpt_json)
 #id draws more requests

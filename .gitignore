@@ -1,7 +1,7 @@
 laptop_codes.py
 .venv
 __pycache__
-ChatGBT_db/__pycache__
+src/ChatGBT_db/__pycache__
 # JetBrains-specific files
 .idea/
 *.iml
