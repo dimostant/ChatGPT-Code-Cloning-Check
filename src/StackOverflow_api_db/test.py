@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers
+from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions
 
 
 #Imports array of json answers, under the corresponding question_id as key
@@ -12,32 +12,34 @@ def craft_answers(question_ids):
         print("yay")
 
 
-    if question_ids:
-        with open('test.json', 'r') as t: new_answers = json.load(t) # test input
-        questions_max_pages = 25
-        new_answers = get_api_answers(question_ids, questions_max_pages).get('items', []) # all question id's answers in a json
+#    if question_ids:
 
-        # find unique q_ids in the response answers
-        unique_question_ids = list(set(item[key] for item in new_answers["items"] for key in item.keys() if key == 'question_id'))
-        print(unique_question_ids)
 
-        # iterate through ids, check if exists, add if new
-        for q_id in unique_question_ids:
-            if not any(str(q_id) in item for item in all_answers["items"]):
-                print("in")
-                # extra check for incomplete answers amount
-                new_answers = list(item for item in new_answers["items"] if item['question_id'] == q_id)
-                print(new_answers)
 
-                new_answers_json_arr = {q_id: new_answers}  # order ids getting in?
+    questions_max_pages = 25
+    new_answers = get_api_answers(question_ids, questions_max_pages).get('items', []) # all question id's answers in a json
 
-                all_answers["items"].append(new_answers_json_arr)
-                with open('crafted_answers_arrays.json', 'w') as f: json.dump(all_answers, f, indent=4)
+    # find unique q_ids in the response answers
+    unique_question_ids = list(set(item[key] for item in new_answers["items"] for key in item.keys() if key == 'question_id'))
+    print(unique_question_ids)
 
-                #  leftover ids ( question_ids - unique_question_ids )
-                #  handle cut-off answers that were cut from last id
-                #  how to get total answers for a q_id to check
-                #  could ignore last id and call it next call first
+    # iterate through ids, check if exists, add if new
+    for q_id in unique_question_ids:
+        if not any(str(q_id) in item for item in all_answers["items"]):
+            print("in")
+            # extra check for incomplete answers amount
+            new_answers = list(item for item in new_answers["items"] if item['question_id'] == q_id)
+            print(new_answers)
+
+            new_answers_json_arr = {q_id: new_answers}  # order ids getting in?
+
+            all_answers["items"].append(new_answers_json_arr)
+            with open('crafted_answers_arrays.json', 'w') as f: json.dump(all_answers, f, indent=4)
+
+            #  leftover ids ( question_ids - unique_question_ids )
+            #  handle cut-off answers that were cut from last id
+            #  how to get total answers for a q_id to check
+            #  could ignore last id and call it next call first
 
 
 # current_page = 1
@@ -91,7 +93,6 @@ if 'all_questions' in vars():
 
 
 print("start")
-
 #fetch answers
 question_ids = [] # remove
 craft_answers(question_ids) # implement loop inside

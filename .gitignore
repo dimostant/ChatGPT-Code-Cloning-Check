@@ -11,3 +11,4 @@ src/ChatGBT_db/__pycache__
 .idea/assetWizard.xml
 .idea/libraries/
 .idea/shelf/
+.src/constants.py
