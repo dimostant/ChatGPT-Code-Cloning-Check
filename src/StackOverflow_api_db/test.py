@@ -15,7 +15,7 @@ def craft_answers(): # question_ids):
     question_ids = list(set(item["question_id"] for item in all_questions["items"]))
     #print(question_ids)
 
-    question_ids = question_ids[:100]
+    question_ids = question_ids[:3]
     #print(question_ids)
 
     if question_ids:
@@ -24,7 +24,8 @@ def craft_answers(): # question_ids):
         # print(new_answers)
         # with open('test.json', 'w') as f: json.dump(new_answers, f, indent=4)
 
-        with open('test.json', 'r') as e: new_answers = json.load(e)  # for testing, remove
+        with open('test.json', 'r') as e:
+            new_answers = json.load(e)  # for testing, remove
 
         # find unique q_ids in the response answers
         unique_question_ids = list(set(item[key] for item in new_answers for key in item.keys() if key == 'question_id'))
@@ -35,12 +36,12 @@ def craft_answers(): # question_ids):
             if not any(str(q_id) in item for item in all_answers["items"]):
                 print("in")
                 # extra check for incomplete answers amount
-                new_answers = list(item for item in new_answers if item['question_id'] == q_id)
-                print(new_answers)
+                filtered_id_new_answers = list(item for item in new_answers if item['question_id'] == q_id)
+                print(filtered_id_new_answers)
 
-                new_answers_json_arr = {q_id: new_answers}  # order ids getting in?
+                filtered_new_answers_json_arr = {q_id: filtered_id_new_answers}  # order ids getting in?
 
-                all_answers["items"].append(new_answers_json_arr)
+                all_answers["items"].append(filtered_new_answers_json_arr)
                 with open('crafted_answers_arrays.json', 'w') as f: json.dump(all_answers, f, indent=4)
                 #  leftover ids ( question_ids - unique_question_ids )
                 #  handle cut-off answers that were cut from last id
