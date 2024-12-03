@@ -1,5 +1,7 @@
 import json
 from collections import Counter
+
+
 from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions
 
 #Imports array of json answers, under the corresponding question_id as key
@@ -17,17 +19,16 @@ def craft_answers(questions_max_pages): # question_ids):
     with open('questions_api_response.json', 'r') as e: all_questions = json.load(e)
     question_ids = list(set(item["question_id"] for item in all_questions["items"]))
     #sort q_ids #implement while
+    #fetch 100 of ids until no more
     question_ids = question_ids[:100]
 
     if question_ids:
         new_answers = get_api_answers(question_ids, questions_max_pages).get('items', []) # all question id's answers in a json
-
         # with open('test.json', 'w') as f: json.dump(new_answers, f, indent=4) # for testing, remove
         # with open('test.json', 'r') as e: new_answers = json.load(e)  # for testing, remove
 
         # find unique q_ids in the response answers
         unique_question_ids = list(set(item[key] for item in new_answers for key in item.keys() if key == 'question_id'))
-
 
         # iterate through ids, check if exists, add if new
         for q_id in unique_question_ids:
@@ -42,6 +43,7 @@ def craft_answers(questions_max_pages): # question_ids):
                 #  handle cut-off answers that were cut from last id
                 #  how to get total answers for a q_id to check
                 #  could ignore last id and call it next call first
+                #  case answers more than 100? automatically resolved by StackAPI?
 
 
 # current_page = 1
@@ -93,5 +95,13 @@ if 'all_questions' in vars():
     with open('questions_api_response.json', 'w') as f: json.dump(all_questions, f, indent=4)
 
 
-#fetch answers
-craft_answers(25) # question_ids) # implement loop inside
+# fetch answers
+# craft_answers(25) # question_ids) # implement loop inside
+
+from random import random, randint
+
+arr = [randint(1,10) for _ in range(1570)]
+
+for i in range (0,len(arr),100) :
+    subarr = arr[i:i+100]
+    print(f'{subarr[0]} to {subarr[-1]} elements = {arr[i:i+100]}')
