@@ -1,72 +1,57 @@
 import json
 from collections import Counter
-from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions
+
+from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions_advanced
 
 #Imports array of json answers, under the corresponding question_id as key
-def craft_answers(questions_max_pages): # question_ids):
-    with open('answers.json', 'r') as e:
+def craft_answers(max_pages): # question_ids):
+    with open('answers.json', 'r') as a:
         try :
-            all_answers = json.load(e)
+            all_answers = json.load(a)
         except :
-            print("file empty")
+            print("file empty") #throws when not empty
             all_answers = {}
 
     if not "items" in all_answers.keys():
         all_answers = { "items": [] }
 
-    with open('questions.json', 'r') as e: all_questions = json.load(e)
+    with open('questions.json', 'r') as q: all_questions = json.load(q)
     question_ids = list(set(item["question_id"] for item in all_questions["items"]))
-    #sort q_ids #implement while
-    #fetch 100 of ids until no more
-    question_ids = question_ids[:100]
+
+    question_ids = []
 
     if question_ids:
-        new_answers = get_api_answers(question_ids, questions_max_pages).get('items', []) # all question id's answers in a json
-        # with open('test.json', 'w') as f: json.dump(new_answers, f, indent=4) # for testing, remove
-        # with open('test.json', 'r') as e: new_answers = json.load(e)  # for testing, remove
+        for i in range(0, len(question_ids), 100):
+            question_ids_chunk = question_ids[i:i + 100]
+            new_answers = get_api_answers(question_ids_chunk, max_pages).get('items', [])
 
-        # find unique q_ids in the response answers
-        unique_question_ids = list(set(item[key] for item in new_answers for key in item.keys() if key == 'question_id'))
+            # find unique q_ids in the response answers
+            unique_question_ids = list(set(item[key] for item in new_answers for key in item.keys() if key == 'question_id'))
 
-        # iterate through ids, check if exists, add if new
-        for q_id in unique_question_ids:
-            if not any(str(q_id) in item for item in all_answers["items"]):
-                # extra check for incomplete answers amount
-                filtered_id_new_answers = list(item for item in new_answers if item['question_id'] == q_id)
-                filtered_new_answers_json_arr = {q_id: filtered_id_new_answers}  # order ids getting in?
+            # iterate through ids, check if exists, add if new
+            for q_id in unique_question_ids:
+                print(q_id)
+                if not any(str(q_id) in item for item in all_answers["items"]):
+                    # extra check for incomplete answers amount
+                    filtered_id_new_answers = list(item for item in new_answers if item['question_id'] == q_id)
+                    filtered_new_answers_json_arr = {q_id: filtered_id_new_answers}  # TODO: order ids getting in?
 
-                all_answers["items"].append(filtered_new_answers_json_arr)
-                with open('answers.json', 'w') as f: json.dump(all_answers, f, indent=4)
-                #  leftover ids ( question_ids - unique_question_ids )
-                #  handle cut-off answers that were cut from last id
-                #  how to get total answers for a q_id to check
-                #  could ignore last id and call it next call first
-                #  case answers more than 100? automatically resolved by StackAPI?
+                    all_answers["items"].append(filtered_new_answers_json_arr)
+                    with open('answers.json', 'w') as a: json.dump(all_answers, a, indent=4)
+                    #  TODO: leftover ids ( question_ids - unique_question_ids )
+                    #  TODO: handle cut-off answers that were cut from last id
+                    #  TODO: how to get total answers for a q_id to check
+                    #  TODO: could ignore last id and call it next call first
+                    #  TODO: case answers more than 100? automatically resolved by StackAPI?
 
+max_pages = 25
 
-# current_page = 1
-# while var["has_more"] is True:
-#     print(current_page)
-#
-#     # do the stackapi call and see results, do I need and how to handle backoff
-#
-#     current_page += 1
-#     if current_page % 15 == 0:
-#         time.sleep(30)
-#         print("stop")
-#
-#     if var["quota_remaining"] < 50 :
-#         print(current_page)
-#         break
-#
-#     #backoff? is it automatic?
-
-# fetch every question
 has_more = False
+# fetch every question
 while has_more:
     print("has_more")
 
-    # questions = get_api_questions_advanced() # TODO: set the next page
+    questions = get_api_questions_advanced(max_pages)
     with open('questions.json', 'r') as e: all_questions = json.load(e) #fortesting
 
     # page limit is 25, fetch next pages until has_more false
@@ -74,7 +59,9 @@ while has_more:
         print(all_questions["has_more"])
         has_more = False
 
-    has_more = False  # remove
+    has_more = False  # testing remove
+
+# TODO: sort and duplicate by chunks or alltoghether?
 
 if 'all_questions' in vars():
     # remove duplicates
@@ -88,18 +75,15 @@ if 'all_questions' in vars():
                  if question["question_id"] == dupid:
                      all_questions["items"].remove(question)
                      break
+        #TODO: this doesnt remove more than one duplicate, must work for all
         question_ids = set(question_ids)
+
+    #sort questions or q_ids
 
     with open('questions.json', 'w') as f: json.dump(all_questions, f, indent=4)
 
 
 # fetch answers
-# craft_answers(25) # question_ids) # implement loop inside
+craft_answers(25) # question_ids) # implement loop inside
 
-from random import random, randint
 
-arr = [randint(1,10) for _ in range(1570)]
-
-for i in range (0,len(arr),100) :
-    subarr = arr[i:i+100]
-    print(f'{subarr[0]} to {subarr[-1]} elements = {arr[i:i+100]}')

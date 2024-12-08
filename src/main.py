@@ -18,7 +18,7 @@ def compare_questions(api_question, gpt_question):
     y_list = word_tokenize(gpt_question)
 
     sw = stopwords.words('english')
-    l1 = []#;
+    l1 = []
     l2 = []
 
     x_set = {w for w in x_list if not w in sw}
