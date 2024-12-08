@@ -1,12 +1,10 @@
 import json
 from collections import Counter
-
-
 from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions
 
 #Imports array of json answers, under the corresponding question_id as key
 def craft_answers(questions_max_pages): # question_ids):
-    with open('crafted_answers_arrays.json', 'r') as e:
+    with open('answers.json', 'r') as e:
         try :
             all_answers = json.load(e)
         except :
@@ -16,7 +14,7 @@ def craft_answers(questions_max_pages): # question_ids):
     if not "items" in all_answers.keys():
         all_answers = { "items": [] }
 
-    with open('questions_api_response.json', 'r') as e: all_questions = json.load(e)
+    with open('questions.json', 'r') as e: all_questions = json.load(e)
     question_ids = list(set(item["question_id"] for item in all_questions["items"]))
     #sort q_ids #implement while
     #fetch 100 of ids until no more
@@ -38,7 +36,7 @@ def craft_answers(questions_max_pages): # question_ids):
                 filtered_new_answers_json_arr = {q_id: filtered_id_new_answers}  # order ids getting in?
 
                 all_answers["items"].append(filtered_new_answers_json_arr)
-                with open('crafted_answers_arrays.json', 'w') as f: json.dump(all_answers, f, indent=4)
+                with open('answers.json', 'w') as f: json.dump(all_answers, f, indent=4)
                 #  leftover ids ( question_ids - unique_question_ids )
                 #  handle cut-off answers that were cut from last id
                 #  how to get total answers for a q_id to check
@@ -69,7 +67,7 @@ while has_more:
     print("has_more")
 
     # questions = get_api_questions_advanced() # TODO: set the next page
-    with open('questions_api_response.json', 'r') as e: all_questions = json.load(e) #fortesting
+    with open('questions.json', 'r') as e: all_questions = json.load(e) #fortesting
 
     # page limit is 25, fetch next pages until has_more false
     if not all_questions["has_more"]:
@@ -92,7 +90,7 @@ if 'all_questions' in vars():
                      break
         question_ids = set(question_ids)
 
-    with open('questions_api_response.json', 'w') as f: json.dump(all_questions, f, indent=4)
+    with open('questions.json', 'w') as f: json.dump(all_questions, f, indent=4)
 
 
 # fetch answers
