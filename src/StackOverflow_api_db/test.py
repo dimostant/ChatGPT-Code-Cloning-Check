@@ -44,26 +44,31 @@ def craft_answers(max_pages): # question_ids):
                     #  TODO: could ignore last id and call it next call first
                     #  TODO: case answers more than 100? automatically resolved by StackAPI?
 
-max_pages = 25
+max_pages = 500
 
-has_more = False
+has_more = True
 # fetch every question
 while has_more:
     print("has_more")
 
-    questions = get_api_questions_advanced(max_pages)
-    with open('questions.json', 'r') as e: all_questions = json.load(e) #fortesting
+    all_questions = get_api_questions_advanced(max_pages) #reduce requested data to test
+    # print(questions)
+    # with open('questions.json', 'r') as e: all_questions = json.load(e) #for testing
 
     # page limit is 25, fetch next pages until has_more false
     if not all_questions["has_more"]:
         print(all_questions["has_more"])
         has_more = False
 
-    has_more = False  # testing remove
+    # has_more = False  # testing remove
 
 # TODO: sort and duplicate by chunks or alltoghether?
 
 if 'all_questions' in vars():
+    # sort # might be already sorted
+    # sorted_questions = sorted(all_questions["items"], key = lambda k : k["question_id"]) # TODO: test # how does this work?
+    # print(sorted_questions, key)
+
     # remove duplicates
     question_ids = list(item["question_id"] for item in all_questions["items"])
     if len(set(question_ids)) < len(question_ids):
@@ -78,12 +83,12 @@ if 'all_questions' in vars():
         #TODO: this doesnt remove more than one duplicate, must work for all
         question_ids = set(question_ids)
 
-    #sort questions or q_ids
 
-    with open('questions.json', 'w') as f: json.dump(all_questions, f, indent=4)
+
+with open('questions.json', 'w') as f: json.dump(all_questions, f, indent=4)
 
 
 # fetch answers
-craft_answers(25) # question_ids) # implement loop inside
+# craft_answers(25) # question_ids) # implement loop inside
 
 
