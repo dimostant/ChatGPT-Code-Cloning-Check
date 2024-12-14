@@ -15,9 +15,9 @@ def get_api_questions(list_of_ids, max_pages):
     return api_questions
 
 
-def get_api_questions_advanced(max_pages):
+def get_api_questions_advanced(max_pages, page):
     SITE.max_pages = max_pages
-    questions = SITE.fetch('search/advanced', todate=datetime(2021,9,1),
+    questions = SITE.fetch('search/advanced', page=page, todate=datetime(2021,9,1),
                        order='asc', sort='creation', accepted=True, closed=True, tagged='python', filter='!*1PUVE3Qq3HSQhXM1rAf4Bn*qUK)kYEiMeqfYwRhD')
     print("quota remaining : ", questions["quota_remaining"])
     SITE.max_pages = max_pages
