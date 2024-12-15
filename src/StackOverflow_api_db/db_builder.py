@@ -53,11 +53,12 @@ def craft_questions(max_pages):
             try :
                 all_questions = json.load(e)
             except :
-                print("file empty") #throws when not empty
+                #empty non json content #throws when not empty
+                print("file empty")
                 all_questions = []
 
         new_questions = get_api_questions_advanced(max_pages, page)
-
+        #TODO: handle quota ending and possible errors
         all_questions += new_questions["items"]
 
         with open('questions.json', 'w') as f:
