@@ -108,7 +108,7 @@ def compare_process ():
                             gpt_question = chatgpt_db.get_conversation_question(gpt_conversation)
                             str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
                             # TODO: check for empty question and others empty things like this ( i think {}) EVERYWHERE
-                            # TODO: check for chinese characters e.t.c and skip question # filter for python
+                            # TODO: check for chinese characters e.t.c and skip question
                             # print("DevGPT        question :", str_gpt_question)
 
                             counter = counter + 1
