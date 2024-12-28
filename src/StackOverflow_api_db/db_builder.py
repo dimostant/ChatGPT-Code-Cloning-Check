@@ -44,6 +44,8 @@ def craft_answers(max_pages): # question_ids):
                     #  TODO: could ignore last id and call it next call first
                     #  TODO: case answers more than 100? automatically resolved by StackAPI?
 
+                    # TODO: print page
+
 def craft_questions(max_pages):
     has_more = True
     page = 1
