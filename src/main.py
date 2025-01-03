@@ -2,6 +2,7 @@ import os
 import json
 
 import pandas as pd
+import numpy as np
 # from nltk.corpus import stopwords
 # from nltk.tokenize import word_tokenize
 
@@ -55,13 +56,6 @@ def compare_answers(so_api_answers_json, gpt_conversation, xl, row): #might chan
     # TODO: complete and test if "remove" function provides code safe to be compared
     # print("DevGPT code : \n", gpt_answer_clean_code)
 
-    # columns
-    so_aid               = 5
-    so_answer_text       = 6
-    mnaist_aindex        = 7
-    mnaist_answer_text   = 8
-    answer_similarity    = 9
-
     # TODO: check for empty DevGPT answer # test if this is done
     if "".join(gpt_answer_clean_code.split()) != "": #removes all whitespaces
         for item in so_api_answers_json:
@@ -72,15 +66,16 @@ def compare_answers(so_api_answers_json, gpt_conversation, xl, row): #might chan
                 so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
                 # print("api code: ", so_api_answer_clean_code)
 
-                row += 1
-                xl.iloc[row, so_aid] = so_api_answer_id
-                xl.iloc[row, so_answer_text] = so_api_answer_clean_code
-                xl.iloc[row, mnaist_aindex] = '_'
-                xl.iloc[row, mnaist_answer_text] = gpt_answer_clean_code
-
                 cloning_percentage = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code) #TODO: hardcoded, change #TODO: rename?
 
-                xl.iloc[row, answer_similarity] = cloning_percentage
+                xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+
+                xl.loc[len(xl)] = [
+                    np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage
+                ]
+                print('a :', np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage)
+                row += 1
+                xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                 ############################################ obsolete?
                 if cloning_percentage == 1:
@@ -91,6 +86,8 @@ def compare_answers(so_api_answers_json, gpt_conversation, xl, row): #might chan
                     print("inconclusive similarity") # TODO: does that mean something else?
                 else :
                     print("completely different code")
+
+           break
 
                 ##########################################################
 
@@ -107,21 +104,17 @@ def compare_process ():
     with open(os.path.join('StackOverflow_api_db', 'db', 'answers.json'), 'r') as a:
         so_api_answers_json = json.load(a)
 
-    df = pd.read_excel(os.path.join('..', 'results.xlsx'))
-    df_row    = len(df.index)   - 1
-
-    # excel columns
-    so_qid               = 0
-    so_question_text     = 1
-    mnaist_qindex        = 2
-    mnaist_question_text = 3
-    question_similarity  = 4
-
-   # if so_api_questions_json is not {"items":[]}
-   #     so_api_questions_json = {"items":[]}# remove
+    # if so_api_questions_json is not {"items":[]}
+    #     so_api_questions_json = {"items":[]}# remove
 
     # iterate through every question
+
+    counter1 = 0
+
     for item in so_api_questions_json.get("items", []):
+        counter1 = counter1 + 1
+        print(counter1)
+
         if item.get("body") :
             so_api_question_id = item["question_id"]
             so_api_question_body = item["body"] #improve? # for title?
@@ -145,21 +138,18 @@ def compare_process ():
                             counter = counter + 1
                             print(counter)
 
-                            # df.iloc[df_row, so_qid]           = so_api_question_id
-                            # df.iloc[df_row, so_question_text] = str_so_api_clean_question
-                            # df.iloc[df_row, mnaist_qindex] = ''# TODO: define chat question index
-                            # df.iloc[df_row, mnaist_question_text] = str_gpt_question
-                            df.loc[len(df)] = [
-                                so_api_question_id, str_so_api_clean_question, '', str_gpt_question, '','','','','',''
-                            ]
-                            df_row += 1
-
+                            # TODO: define chat question index (question number, code number) => [0,1]
                             similarity = compare_questions(str_so_api_clean_question, str_gpt_question) #TODO: hardcoded, change #TODO: rename?
 
-                            df.iloc[df_row, question_similarity] = similarity
-                            df.to_excel(os.path.join('..', 'results.xlsx'))
+                            df = pd.read_excel(os.path.join('..', 'results.xlsx'))
+                            df_row = len(df.index) - 1
 
-                            break #remove
+                            df.loc[len(df)] = [
+                                so_api_question_id, str_so_api_clean_question, ' ', str_gpt_question, similarity, np.nan, np.nan, np.nan, np.nan, np.nan
+                            ]
+                            print('q: ', so_api_question_id, str_so_api_clean_question, ' ', str_gpt_question, similarity, np.nan, np.nan, np.nan, np.nan, np.nan)
+                            df_row += 1
+                            df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
 
                             ############################################ obsolete?
                             if similarity == 1:
@@ -172,12 +162,13 @@ def compare_process ():
                                 try:
                                     # TODO: what is returned, if the id has no answers
                                     so_api_answers_json_of_id = (item for item in so_api_answers_json["items"] if list(item.keys())[0] == str(so_api_question_id))
-                                    print("a", so_api_answers_json_of_id)
+                                    # print("a", so_api_answers_json_of_id)
                                 except:
                                     continue
 
                                 #TODO: see if of_id answers is an issue
                                 if so_api_answers_json_of_id: # TODO:     and gpt_conversations[code (and answer?)]
+                                    print('comp')
                                     compare_answers(so_api_answers_json_of_id, gpt_conversation, df, df_row)
 
                             # TODO: is smaller batch, e.g 0.3 necessary?
@@ -187,7 +178,13 @@ def compare_process ():
                                 print("different questions\n")
                             ########################################################
 
-                if counter >= 1: break # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
+                if counter >= 1:
+                    print("Breaaaakkk")
+                    break # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
+
+        if counter1 >= 1:
+            print("Breaaaakkk break")
+            break
 
 # TODO: only compare with python code from DEVGPT
 # TODO: extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
