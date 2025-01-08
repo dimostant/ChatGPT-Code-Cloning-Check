@@ -1,19 +1,17 @@
 import os
-import json
 
 import pandas as pd
 import numpy as np
 # from nltk.corpus import stopwords
 # from nltk.tokenize import word_tokenize
 
-import ChatGBT_db.devgpt_chats as chatgpt_db
+from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
 from cloning import code_cloning_check
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars
 
-
 def compare_questions(api_question, gpt_question):
     # print removing the \n and replacing with " " for ease
-    # print("\ncomparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
+    # print("\n comparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
     #
     # x_list = word_tokenize(api_question)
     # y_list = word_tokenize(gpt_question)
@@ -49,7 +47,7 @@ def compare_questions(api_question, gpt_question):
     return 0.8
 
 def compare_answers(so_api_answers_json, gpt_conversation): #might change to answers
-    gpt_answer_dictionary = chatgpt_db.get_conversation_code(gpt_conversation)
+    gpt_answer_dictionary = get_conversation_code(gpt_conversation)
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
     # TODO: complete and test if "remove" function provides code safe to be compared
@@ -97,20 +95,25 @@ def compare_answers(so_api_answers_json, gpt_conversation): #might change to ans
             break
 
 def compare_process ():
-    # read all DevGPT conversations
-    dev_gpt_json = chatgpt_db.get_json_data(
+    # read all DevGPT conversations #TODO: refactor json functions
+    dev_gpt_json = get_json_data(
         'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json'
     )
-
     # read all questions from db file
-    with open(os.path.join('StackOverflow_api_db', 'db', 'questions.json'), 'r') as q:
-        so_api_questions_json = json.load(q)
+    so_api_questions_json = get_json_data(
+        os.path.join('StackOverflow_api_db', 'db', 'questions.json')
+    )
+    # with open(os.path.join('StackOverflow_api_db', 'db', 'questions.json'), 'r') as q:
+    #     so_api_questions_json = json.load(q)
 
     # read all answers from db file
-    with open(os.path.join('StackOverflow_api_db', 'db', 'answers.json'), 'r') as a:
-        so_api_answers_json = json.load(a)
+    so_api_answers_json = get_json_data(
+        os.path.join('StackOverflow_api_db', 'db', 'answers.json')
+    )
+    # with open(os.path.join('StackOverflow_api_db', 'db', 'answers.json'), 'r') as a:
+    #     so_api_answers_json = json.load(a)
 
-    counter1 = 0 # renove
+    counter1 = 0                     # remove
     # iterate through every so_api question
     for so_api_question in so_api_questions_json.get("items", []):
         if so_api_question.get("body") :
@@ -130,8 +133,8 @@ def compare_process ():
                         if gpt_conversation :
                             counter = counter + 1 # remove
                             print(counter)        # remove
-                            gpt_question = chatgpt_db.get_conversation_question(gpt_conversation)
-                            str_gpt_question = chatgpt_db.json_data_to_str(gpt_question)
+                            gpt_question = get_conversation_question(gpt_conversation)
+                            str_gpt_question = json_data_to_str(gpt_question)
                             # TODO: check for empty question and others empty things like this ( i think {}) EVERYWHERE
                             # TODO: check for chinese characters e.t.c and skip question
                             # print("DevGPT        question :", str_gpt_question)
@@ -145,7 +148,7 @@ def compare_process ():
                             ]
                             df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
 
-                            #TODO: could compare questions anyway and see posible similarities we didnt expect
+                            #TODO: could compare questions anyway and see possible similarities we didn't expect
                             # TODO: way to get rid of try? (1)
                             if 0.7 <= similarity < 1:
                                 try:
@@ -165,11 +168,11 @@ def compare_process ():
 
                 # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                 if counter >= 1:        # remove
-                    print("Breaaaakkk") # remove
+                    print("Break1") # remove
                     break               # remove
 
         if counter1 >= 1:               # remove
-            print("Breaaaakkk break")   # remove
+            print("break2")   # remove
             break                       # remove
 
 
@@ -179,6 +182,11 @@ def compare_process ():
 # TODO: identical case [questionId],[gpt_conversation]
 # TODO: different case [questionId],[gpt_conversation]
 # TODO: match     case [questionId],[gpt_conversation]
+
+print(os.getcwd())
+if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
+    os.chdir('..')
+print(os.getcwd())
 compare_process()
 
 #TODO: future considerations:

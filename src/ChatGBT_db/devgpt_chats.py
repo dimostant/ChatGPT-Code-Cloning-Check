@@ -8,7 +8,7 @@ def print_json_data(json_data):
 
 # get data from json file and return it in usable format, always include
 def get_json_data(file_path):
-    with open(file_path) as file:
+    with open(file_path, 'r') as file:
         return json.load(file)
 
 # TODO: fix access safety issue with these functions
