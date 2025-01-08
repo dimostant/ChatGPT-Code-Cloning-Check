@@ -45,14 +45,14 @@ from code_handling import extract_html_code, extract_html_text, extract_dictiona
     # return cosine
 
 def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might change to answers
+    # TODO: complete and test if "remove" function provides code safe to be compared
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
-    # TODO: complete and test if "remove" function provides code safe to be compared
     # print("DevGPT code : \n", gpt_answer_clean_code)
 
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) != "":
-        for so_api_answer in so_api_id_answers_json:
+        for so_api_answer in so_api_id_answers_json: #TODO: use items after converting back to json?
             so_api_answer_body = so_api_answer.get("body", [])
             if so_api_answer_body:                                     #TODO: test
                 so_api_answer_id = so_api_answer["answer_id"]
@@ -112,8 +112,8 @@ def compare_process ():
                             # TODO: check for chinese characters e.t.c and skip question
                             # print("DevGPT        question :", str_gpt_question)
 
-                            # TODO: define chat question index (question number, code number) => [0,1]
-                            similarity = 0.8 # compare_questions(str_so_api_clean_question, str_gpt_question) #TODO: rename?
+                            # TODO: define chat question index (question number, code number) => [0,1] # TODO: rename function?
+                            similarity = 0.8 # compare_questions(str_so_api_clean_question, str_gpt_question)
 
                             df = pd.read_excel(os.path.join('..', 'results.xlsx'))
                             df.loc[len(df)] = [
@@ -121,18 +121,17 @@ def compare_process ():
                             ]
                             df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
 
-                            #TODO: could compare questions anyway and see possible similarities we didn't expect
+                            # TODO: could compare all answers anyway and see possible similarities we didn't expect # TODO: does answer file need checking?
                             if 0.7 <= similarity < 1:
-                                # TODO: does answer file need checking?
                                 so_api_id_answers_json = []
                                 for so_api_id_answers in so_api_answers_json.get("items", []):
                                     if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
                                         so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
                                         break
 
-                                if so_api_id_answers_json:
+                                if so_api_id_answers_json: #TODO: test both ifs
                                     gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                    if gpt_answer_dictionary: #TODO: test
+                                    if gpt_answer_dictionary:
                                         compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
 
                 # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
@@ -151,7 +150,7 @@ if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
 compare_process()
 
 # TODO: should all answers be returned in items in db_builder?
-# TODO: only compare with python code from DEVGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
+# TODO: only compare with python code from DevGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
 
 # TODO: to test compare questions accuracy
 # TODO: identical case [questionId],[gpt_conversation]
