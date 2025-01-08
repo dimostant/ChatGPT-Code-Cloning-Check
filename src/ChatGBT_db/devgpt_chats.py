@@ -17,13 +17,13 @@ def get_user_conversation(json_data, user, conversation):
     return user_conversation
 
 def get_conversation_question(user_conversation):
-    question = user_conversation["Prompt"]
+    question = user_conversation.get("Prompt", [])
     return question
 
 def get_conversation_answer(user_conversation):
-    answer = user_conversation["Answer"]
+    answer = user_conversation.get("Answer", [])
     return answer
 
 def get_conversation_code(user_conversation):
-    code = user_conversation["ListOfCode"]
+    code = user_conversation.get("ListOfCode", [])
     return code

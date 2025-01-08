@@ -1,15 +1,14 @@
 import os
-
 import pandas as pd
 import numpy as np
 # from nltk.corpus import stopwords
 # from nltk.tokenize import word_tokenize
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
-from cloning import code_cloning_check
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars
+# from cloning import code_cloning_check
 
-def compare_questions(api_question, gpt_question):
+# def compare_questions(api_question, gpt_question):
     # print removing the \n and replacing with " " for ease
     # print("\n comparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
     #
@@ -44,84 +43,58 @@ def compare_questions(api_question, gpt_question):
     # print("similarity: ", cosine)
     #
     # return cosine
-    return 0.8
 
-def compare_answers(so_api_answers_json, gpt_conversation): #might change to answers
-    gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might change to answers
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
     # TODO: complete and test if "remove" function provides code safe to be compared
     # print("DevGPT code : \n", gpt_answer_clean_code)
 
-    # TODO: check for empty DevGPT answer # test if this is done
-    # remove all whitespaces
+    # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) != "":
-        for so_api_answer in so_api_answers_json:
-            so_api_answer_id = so_api_answer["answer_id"]
-            so_api_answer_body = so_api_answer["body"]
-            so_api_answer_code = extract_html_code(so_api_answer_body)
-            so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
-            #TODO: the answer must contain code
-            # print("api code: ", so_api_answer_clean_code)
+        for so_api_answer in so_api_id_answers_json:
+            so_api_answer_body = so_api_answer.get("body", [])
+            if so_api_answer_body:                                     #TODO: test
+                so_api_answer_id = so_api_answer["answer_id"]
+                so_api_answer_code = extract_html_code(so_api_answer_body)
+                so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
+                # print("api code : \n", so_api_answer_clean_code)
 
-            cloning_percentage = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code) #TODO: hardcoded, change #TODO: rename?
+                # check for so_api empty code
+                if "".join(so_api_answer_clean_code.split()) != "":
+                    cloning_percentage = 0.8 # code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code) #TODO: rename?
 
-            xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-            xl.loc[len(xl)] = [
-                np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage
-            ]
-            xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
-           # if item.get("body"):
-           #      so_api_answer_id = item["answer_id"]
-           #      so_api_answer_body = item["body"]
-           #      so_api_answer_code = extract_html_code(so_api_answer_body)
-           #      so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
-           #      # print("api code: ", so_api_answer_clean_code)
-           #
-           #      cloning_percentage = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code) #TODO: hardcoded, change #TODO: rename?
-           #      print('ans')
-           #
-           #      xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-           #
-           #      xl.loc[len(xl)] = [
-           #          np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage
-           #      ]
-           #      print('ans2')
-           #      print('a :', np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage)
-           #      row += 1
-           #      xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
-           #
-
-            break
+                    xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+                    xl.loc[len(xl)] = [
+                        np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage
+                    ]
+                    xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
 def compare_process ():
     # read all DevGPT conversations #TODO: refactor json functions
     dev_gpt_json = get_json_data(
         'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json'
     )
+
     # read all questions from db file
     so_api_questions_json = get_json_data(
         os.path.join('StackOverflow_api_db', 'db', 'questions.json')
     )
-    # with open(os.path.join('StackOverflow_api_db', 'db', 'questions.json'), 'r') as q:
-    #     so_api_questions_json = json.load(q)
 
     # read all answers from db file
     so_api_answers_json = get_json_data(
         os.path.join('StackOverflow_api_db', 'db', 'answers.json')
     )
-    # with open(os.path.join('StackOverflow_api_db', 'db', 'answers.json'), 'r') as a:
-    #     so_api_answers_json = json.load(a)
 
     counter1 = 0                     # remove
     # iterate through every so_api question
     for so_api_question in so_api_questions_json.get("items", []):
-        if so_api_question.get("body") :
+        so_api_question_body = so_api_question.get("body", [])
+        if so_api_question_body :
             counter1 = counter1 + 1  # remove
             # print(counter1)        # remove
             counter = 0              # remove # used to choose number ( almost ) of gpt chats
             so_api_question_id = so_api_question["question_id"]
-            so_api_question_body = so_api_question["body"] #TODO: improve? # for title?
             str_so_api_question = extract_html_text(so_api_question_body)
             str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
             # print("StackOverflow question :", str_so_api_clean_question)
@@ -140,7 +113,7 @@ def compare_process ():
                             # print("DevGPT        question :", str_gpt_question)
 
                             # TODO: define chat question index (question number, code number) => [0,1]
-                            similarity = compare_questions(str_so_api_clean_question, str_gpt_question) #TODO: hardcoded, change #TODO: rename?
+                            similarity = 0.8 # compare_questions(str_so_api_clean_question, str_gpt_question) #TODO: rename?
 
                             df = pd.read_excel(os.path.join('..', 'results.xlsx'))
                             df.loc[len(df)] = [
@@ -149,22 +122,18 @@ def compare_process ():
                             df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
 
                             #TODO: could compare questions anyway and see possible similarities we didn't expect
-                            # TODO: way to get rid of try? (1)
                             if 0.7 <= similarity < 1:
-                                try:
-                                    # TODO: does answer file need checking?
-                                    # TODO: what is returned, if the id has no answers
-                                    so_api_id_answers_json = []
-                                    for so_api_id_answers in so_api_answers_json.get("items", []):
-                                        if list(so_api_id_answers.keys())[0] == str(so_api_question_id):
-                                            so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
-                                            break
-                                except:
-                                    continue
-                                # TODO: should this throw error? (2)
-                                # TODO:  and gpt_conversations[code (and answer?)]
+                                # TODO: does answer file need checking?
+                                so_api_id_answers_json = []
+                                for so_api_id_answers in so_api_answers_json.get("items", []):
+                                    if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
+                                        so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
+                                        break
+
                                 if so_api_id_answers_json:
-                                    compare_answers(so_api_id_answers_json, gpt_conversation)
+                                    gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                                    if gpt_answer_dictionary: #TODO: test
+                                        compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
 
                 # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                 if counter >= 1:        # remove
@@ -176,6 +145,12 @@ def compare_process ():
             break                       # remove
 
 
+if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
+    os.chdir('..')
+
+compare_process()
+
+
 # TODO: only compare with python code from DEVGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
 
 # TODO: to test compare questions accuracy
@@ -183,13 +158,8 @@ def compare_process ():
 # TODO: different case [questionId],[gpt_conversation]
 # TODO: match     case [questionId],[gpt_conversation]
 
-print(os.getcwd())
-if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
-    os.chdir('..')
-print(os.getcwd())
-compare_process()
+#################################################################################################################################
 
 #TODO: future considerations:
     # TODO: take only the answer with the most votes
     # TODO: compare question context instead of only the title? compare answer context with chat non code response??
-

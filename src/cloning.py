@@ -6,7 +6,3 @@ def code_cloning_check(gpt_answer_code, so_api_answer_code):
     # tree1 = ast.parse(extracted_so_api_code)
     # tree2 = ast.parse(gpt_answer_clean_code)
     print("cloning or not cloning idk lmao!!!!...")
-
-    
-
-    return 0.8
