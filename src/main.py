@@ -150,7 +150,7 @@ if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
 
 compare_process()
 
-
+# TODO: should all answers be returned in items in db_builder?
 # TODO: only compare with python code from DEVGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
 
 # TODO: to test compare questions accuracy
