@@ -17,9 +17,10 @@ def craft_answers(max_pages): # question_ids):
 
     with open('questions.json', 'r') as q: all_questions = json.load(q)
     question_ids = list(set(item["question_id"] for item in all_questions["items"]))
+    # TODO: check amd fix if set gives unsorted answer
 
-    question_ids = []
-
+    question_ids = [] # remove
+    #TODO: sort answers
     if question_ids:
         for i in range(0, len(question_ids), 100):
             question_ids_chunk = question_ids[i:i + 100]
@@ -31,6 +32,7 @@ def craft_answers(max_pages): # question_ids):
             # iterate through ids, check if exists, add if new
             for q_id in unique_question_ids:
                 print(q_id)
+                # check if answers_id already exist in questions json ids else add them and rewrite the file
                 if not any(str(q_id) in item for item in all_answers["items"]):
                     # extra check for incomplete answers amount
                     filtered_id_new_answers = list(item for item in new_answers if item['question_id'] == q_id)
@@ -57,7 +59,7 @@ def craft_questions(max_pages):
             except :
                 #empty non json content #throws when not empty
                 print("file empty")
-                all_questions = []
+                all_questions = [] #TODO: this to { "items": [] } and test
 
         new_questions = get_api_questions_advanced(max_pages, page)
         #TODO: handle quota ending and possible errors
