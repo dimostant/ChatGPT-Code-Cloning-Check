@@ -6,7 +6,6 @@ import numpy as np
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars
-
 # from cloning import code_cloning_check
 
 # def compare_questions(api_question, gpt_question):
