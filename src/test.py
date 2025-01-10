@@ -23,10 +23,11 @@ try:
     # )
     # print(simian.stdout)
     simian = subprocess.run(
-        ["java", "-jar", "../simian-academic/simian-4.0.0/simian-4.0.0.jar", "../testcode1", "../testcode1"],
+        ["java", "-jar", "../simian-academic/simian-4.0.0/simian-4.0.0.jar", "./testcode1.txt", "./testcode2.txt"],
         check=True, text=True, capture_output=True
     )
     print(simian.stdout)
+    print(simian)
 
 finally:
     code1_file.close()
