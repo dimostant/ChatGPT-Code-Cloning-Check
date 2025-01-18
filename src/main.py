@@ -6,7 +6,7 @@ import numpy as np
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars
-# from cloning import code_cloning_check
+from cloning import code_cloning_check
 
 # def compare_questions(api_question, gpt_question):
     # print removing the \n and replacing with " " for ease
@@ -62,11 +62,12 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(so_api_answer_clean_code.split()) != "":
-                    cloning_percentage = 0.8 # code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code) #TODO: rename?
+                    # cloning_percentage = 0.8 #TODO: rename?
+                    cloning_status = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
 
                     xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
                     xl.loc[len(xl)] = [
-                        np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_percentage #question index, answer index in ' '
+                        np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_status # cloning_percentage #question index, answer index in ' '
                     ]
                     xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
