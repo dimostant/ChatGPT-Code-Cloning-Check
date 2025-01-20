@@ -5,12 +5,11 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
-from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars
-from cloning import code_cloning_check
+from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars, code_cloning_check
 
 def compare_questions(api_question, gpt_question):                                                         #TODO: test
-    #print removing the \n and replacing with " " for ease
-    print("\n comparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
+    #remove the \n and replacing with " " for ease
+    #print("\n comparing questions :\n", api_question.replace("\n", " "), "\nand :\n", gpt_question.replace("\n", " "))
 
     x_list = word_tokenize(api_question)
     y_list = word_tokenize(gpt_question)
@@ -40,7 +39,7 @@ def compare_questions(api_question, gpt_question):                              
         c += l1[i] * l2[i]
 
     cosine = c / float((sum(l1) * sum(l2)) ** 0.5)
-    print("similarity: ", cosine)
+    # print("similarity: ", cosine)
 
     return cosine
 
@@ -60,11 +59,13 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(so_api_answer_clean_code.split()) != "":
-                    cloning_status = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
+                    cloning_percentage = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
+                    print(cloning_percentage)
 
                     xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-                    xl.loc[len(xl)] = [
-                        np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_status # #question index, answer index in ' '
+                    column_names = xl.columns.tolist()
+                    xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                        so_api_answer_id, so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage
                     ]
                     xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
@@ -119,15 +120,22 @@ def compare_process ():
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
 
                                         df = pd.read_excel(os.path.join('..', 'results.xlsx'))
-                                        df.loc[len(df)] = [
-                                            so_api_question_id, str_so_api_clean_question, gtp_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, np.nan, np.nan, np.nan
-                                        ]
-                                        df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
+                                        try:
+                                            df.loc[len(df)] = [
+                                                so_api_question_id, str_so_api_clean_question, gtp_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gtp_conversation_num, np.nan, np.nan
+                                            ]
 
-                                        if 0.7 <= questions_similarity < 1:
-                                            gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                            if gpt_answer_dictionary:                           # TODO: test
-                                                compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                            if 0.7 <= questions_similarity < 1:
+                                                gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                                                if gpt_answer_dictionary:                           # TODO: test
+                                                    compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                        except:
+                                            df.loc[len(df), 0] = [
+                                                so_api_question_num + " " + gtp_conversation_num + "Error"
+                                            ]
+                                            print("Error")
+
+                                        df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                         # if gpt_conversation_num >= 1:        # remove
@@ -151,7 +159,7 @@ compare_process()
 #  why are answers unordered? fix
 #  only compare with python code from DevGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
 #  should answer comparison of < 0.7 be ignored?
-#  should question line in excel appear with the answers and/or should gpt answer index also include question index? (its local to each question)
+#  should question line in excel appear with the answers
 
 
 
