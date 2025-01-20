@@ -1,22 +1,11 @@
-import ast
 import re
-
 import bs4
-import ChatGBT_db.devgpt_chats as chatgpt_db
-
 import html
+from ChatGBT_db.devgpt_chats import json_data_to_str
 
-def is_valid_python_code(code):
-    try:
-        # Try parsing the code using ast.parse
-        ast.parse(code)
-        return True
-    except SyntaxError:
-        # If there is a syntax error, it means the code is not valid Python
-        return False
 
 def extract_html_text(body):
-    body_to_str = chatgpt_db.json_data_to_str(body)
+    body_to_str = json_data_to_str(body)
     soup = bs4.BeautifulSoup(body_to_str, 'html.parser')
     text = soup.get_text()
 
@@ -24,17 +13,17 @@ def extract_html_text(body):
 
 def extract_html_code(body):
     # Parse the HTML content
-    body_to_str = chatgpt_db.json_data_to_str(body)
+    body_to_str = json_data_to_str(body)
     soup = bs4.BeautifulSoup(body_to_str, 'html.parser')
 
     # Find all code snippets inside <pre><code> tags
     code_snippets = [pre.get_text() for pre in soup.find_all('pre')]
 
     # TODO: need to check the order of the concat
-    # Find all inline code snippets inside <code> tags not within <pre>
+    #  Find all inline code snippets inside <code> tags not within <pre>
+    #  needs testing, e.g <pre><code>1<code>2</code>3</pre></code>, is it in order?
+    #  probably not needed, needs testing
     # inline_code_snippets = [code.get_text() for code in soup.find_all('code') if code.parent.name != 'pre']
-    # TODO: needs testing, e.g <pre><code>1<code>2</code>3</pre></code>, is it in order?
-    # probably not needed needs testing
 
     # Combine all extracted code snippets
     code = "\n".join(code_snippets)#  + inline_code_snippets) #this relates to the line 78 issue
