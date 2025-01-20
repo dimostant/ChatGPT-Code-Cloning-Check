@@ -1,4 +1,6 @@
 import os
+from distutils.dir_util import remove_tree
+
 import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
@@ -64,10 +66,16 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
 
                     xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
                     column_names = xl.columns.tolist()
-                    xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                        so_api_answer_id, so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage
-                    ]
-                    xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                    try :
+                        xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                            so_api_answer_id, so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage
+                        ]
+                        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                        return True
+                    except :
+                        print("Error Answers")
+                        return False
+
 
 def compare_process ():
     # read all DevGPT conversations
@@ -125,17 +133,27 @@ def compare_process ():
                                                 so_api_question_id, str_so_api_clean_question, gtp_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gtp_conversation_num, np.nan, np.nan
                                             ]
 
+                                            df.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+
                                             if 0.7 <= questions_similarity < 1:
                                                 gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                                                 if gpt_answer_dictionary:                           # TODO: test
                                                     compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                                    # answer_comparison = compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                                    # if not answer_comparison :
+                                                        # xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                                                        #     str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
+                                                        # ]
+                                                        #
+                                                        # xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+
                                         except:
                                             df.loc[len(df), 0] = [
-                                                so_api_question_num + " " + gtp_conversation_num + "Error"
+                                                str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
                                             ]
                                             print("Error")
 
-                                        df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
+                                            df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                         # if gpt_conversation_num >= 1:        # remove
