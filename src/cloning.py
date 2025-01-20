@@ -25,6 +25,4 @@ def code_cloning_check(gpt_answer_code, so_api_answer_code):
         os.remove(code1_file.name)
         os.remove(code2_file.name)
 
-    return simian.stdout # .strip()
-
-    #convert simian results to percentage
+    return ''.join(simian.stdout.splitlines(keepends=True)[4:-2]) #TODO:convert simian results to percentage

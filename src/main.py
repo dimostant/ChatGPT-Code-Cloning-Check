@@ -48,7 +48,6 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
     # TODO: complete and test if "remove" function provides code safe to be compared
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
-    # print("DevGPT code : \n", gpt_answer_clean_code)
 
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) != "":
@@ -58,16 +57,14 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
                 so_api_answer_id = so_api_answer["answer_id"]
                 so_api_answer_code = extract_html_code(so_api_answer_body)
                 so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
-                # print("api code : \n", so_api_answer_clean_code)
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(so_api_answer_clean_code.split()) != "":
-                    # cloning_percentage = 0.8 #TODO: rename?
                     cloning_status = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
 
                     xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
                     xl.loc[len(xl)] = [
-                        np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_status # cloning_percentage #question index, answer index in ' '
+                        np.nan, np.nan, np.nan, np.nan, np.nan, so_api_answer_id, so_api_answer_clean_code, ' ', gpt_answer_clean_code, cloning_status # #question index, answer index in ' '
                     ]
                     xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
@@ -93,63 +90,63 @@ def compare_process ():
         so_api_question_body = so_api_question.get("body", [])
         if so_api_question_body :
             counter1 = counter1 + 1  # remove
-            # print(counter1)        # remove
             counter = 0              # remove # used to choose number ( almost ) of gpt chats
             so_api_question_id = so_api_question["question_id"]
             str_so_api_question = extract_html_text(so_api_question_body)
             str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
             # print("StackOverflow question :", str_so_api_clean_question)
 
-            so_api_id_answers_json = []
-            for so_api_id_answers in so_api_answers_json.get("items", []):
-                if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
-                    so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
-                    break
+            if "".join(str_so_api_clean_question.split()) != "":
+                so_api_id_answers_json = []
+                for so_api_id_answers in so_api_answers_json.get("items", []):
+                    if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
+                        so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
+                        break
 
-            if so_api_id_answers_json:                                   # TODO: test
-                # compare question with every DevGPT question
-                for source in dev_gpt_json.get("Sources", []):
-                    for sharing_data in source.get("ChatgptSharing", []):
-                        for gpt_conversation in sharing_data.get("Conversations", []):
-                            if gpt_conversation :
-                                counter = counter + 1 # remove
-                                print(counter)        # remove
-                                gpt_question = get_conversation_question(gpt_conversation)
-                                str_gpt_question = json_data_to_str(gpt_question)
-                                # TODO: check for empty question and others empty things like this ( i think {}) EVERYWHERE
-                                # TODO: check for chinese characters e.t.c and skip question
-                                # print("DevGPT        question :", str_gpt_question)
+                if so_api_id_answers_json:                                   # TODO: test
+                    # compare question with every DevGPT question
+                    for source in dev_gpt_json.get("Sources", []):
+                        for sharing_data in source.get("ChatgptSharing", []):
+                            for gpt_conversation in sharing_data.get("Conversations", []):
+                                if gpt_conversation :
+                                    counter = counter + 1 # remove
+                                    print(counter)        # remove
+                                    gpt_question = get_conversation_question(gpt_conversation)
+                                    str_gpt_question = json_data_to_str(gpt_question)
+                                    str_gpt_clean_question = remove_non_utf8_chars(str_gpt_question)
+                                    # TODO: check for chinese characters e.t.c and skip question #is the solution above proper?
 
-                                # TODO: define chat question index (question number, code number) => [0,1] # TODO: rename function?
-                                similarity = 0.8 # compare_questions(str_so_api_clean_question, str_gpt_question)
+                                    if "".join(str_gpt_clean_question.split()) != "":
+                                        similarity = 0.8 # compare_questions(str_so_api_clean_question, str_clean_question) # TODO: rename function?
 
-                                df = pd.read_excel(os.path.join('..', 'results.xlsx'))
-                                df.loc[len(df)] = [
-                                    so_api_question_id, str_so_api_clean_question, counter, str_gpt_question, similarity, np.nan, np.nan, np.nan, np.nan, np.nan
-                                ]
-                                df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
+                                        df = pd.read_excel(os.path.join('..', 'results.xlsx'))
+                                        df.loc[len(df)] = [
+                                            so_api_question_id, str_so_api_clean_question, counter, str_gpt_clean_question, similarity, np.nan, np.nan, np.nan, np.nan, np.nan
+                                        ]
+                                        df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
+                                        # TODO: define chat question index (question number, code number) => [0,1]
 
-                                # TODO: could compare all answers anyway and see possible similarities we didn't expect # TODO: does answer file need checking?
-                                if 0.7 <= similarity < 1:
-                                    gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                    if gpt_answer_dictionary:                           # TODO: test
-                                        compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                        # TODO: does answer file need checking?
+                                        if 0.7 <= similarity < 1:
+                                            gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                                            if gpt_answer_dictionary:                           # TODO: test
+                                                compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
 
-                    # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
-                    if counter >= 1:        # remove
-                        print("Break1")     # remove
-                        break               # remove
+                        # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
+                        # if counter >= 1:        # remove
+                        #     print("Break1")     # remove
+                        #     break               # remove
 
-            if counter1 >= 1:               # remove
-                print("break2")             # remove
-                break                       # remove
+                if counter1 >= 10:              # remove
+                    print("break2")             # remove
+                    break                       # remove
 
-# print(os.getcwd())
+
 # if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
 #     os.chdir('..')
-# print(os.getcwd())
 compare_process()
 
+# TODO: check for empty question and others empty things like this ( i think {}) EVERYWHERE
 # TODO: should all answers be returned in items in db_builder?
 # TODO: only compare with python code from DevGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
 
