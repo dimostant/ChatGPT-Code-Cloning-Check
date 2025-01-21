@@ -98,7 +98,7 @@ def compare_process ():
     for so_api_question in so_api_questions_json.get("items", []):
         so_api_question_body = so_api_question.get("body", [])
         if so_api_question_body :
-            so_api_question_num += 1               # remove
+            so_api_question_num = so_api_question_num + 1               # remove
             gtp_conversation_num = 0
             so_api_question_id = so_api_question["question_id"]
             str_so_api_question = extract_html_text(so_api_question_body)
@@ -118,7 +118,7 @@ def compare_process ():
                         for sharing_data in source.get("ChatgptSharing", []):
                             for gpt_conversation in sharing_data.get("Conversations", []):
                                 if gpt_conversation :
-                                    gtp_conversation_num += gtp_conversation_num
+                                    gtp_conversation_num = gtp_conversation_num + 1
                                     print(gtp_conversation_num)        # remove
                                     gpt_question = get_conversation_question(gpt_conversation)
                                     str_gpt_question = json_data_to_str(gpt_question)
@@ -127,33 +127,41 @@ def compare_process ():
                                     if "".join(str_gpt_clean_question.split()) != "":
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
 
-                                        df = pd.read_excel(os.path.join('..', 'results.xlsx'))
+                                        df = pd.read_excel('results.xlsx')
                                         try:
                                             df.loc[len(df)] = [
                                                 so_api_question_id, str_so_api_clean_question, gtp_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gtp_conversation_num, np.nan, np.nan
                                             ]
+                                            print("r")
 
-                                            df.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                                            df.to_excel('results.xlsx', index=False)
+                                            print("ο")
 
-                                            if 0.7 <= questions_similarity < 1:
-                                                gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                                if gpt_answer_dictionary:                           # TODO: test
-                                                    compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
-                                                    # answer_comparison = compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
-                                                    # if not answer_comparison :
-                                                        # xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                                                        #     str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
-                                                        # ]
-                                                        #
-                                                        # xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                                            # if 0.7 <= questions_similarity < 1:
+                                            #     gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                                            #     if gpt_answer_dictionary:                           # TODO: test
+                                            #         compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                            #         # answer_comparison = compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                            #         # if not answer_comparison :
+                                            #             # xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                                            #             #     str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
+                                            #             # ]
+                                            #             #
+                                            #             # xl.to_excel('results.xlsx', index=False)
 
                                         except:
-                                            df.loc[len(df), 0] = [
-                                                str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
-                                            ]
+                                            print("str_so_api_clean_question = ", str_so_api_clean_question)
+                                            # print(df.loc[len(df),df.columns[len(df.columns) - 1]])
+                                            df.drop(len(df) - 1)
+                                            # df.loc[len(df)] = [
+                                            #     str(so_api_question_num) + " or " + str(gtp_conversation_num) + "Error", np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
+                                            # ]
+                                            # print(df.loc[len(df),df.columns[len(df.columns) - 1]])
+                                            # print(df.loc[len(df), 0])
                                             print("Error")
 
-                                            df.to_excel(os.path.join('..', 'results.xlsx'),  index=False)
+                                            df.to_excel('results.xlsx',  index=False)
+                                            print("rr")
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                         # if gpt_conversation_num >= 1:        # remove
@@ -167,6 +175,8 @@ def compare_process ():
 ## UNCOMMENT THIS!!!
 # if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
 #     os.chdir('..')
+os.remove('results.xlsx')
+os.popen("copy " + str('resultsC.xlsx') + " " + str('results.xlsx'))
 compare_process()
 
 # TODO: check for empty question and others empty things like this ( i think {}) EVERYWHERE
