@@ -118,40 +118,43 @@ def compare_process ():
                             for gpt_conversation in sharing_data.get("Conversations", []):
                                 if gpt_conversation :
                                     gpt_conversation_num = gpt_conversation_num + 1
+
                                     print("id : " + str(gpt_conversation_num))
-                                    print("###################################################################################################################################################")# remove
+                                    # print("###################################################################################################################################################")# remove
                                     gpt_question = get_conversation_question(gpt_conversation)
                                     str_gpt_question = json_data_to_str(gpt_question)
                                     str_gpt_clean_question = remove_non_utf8_chars(str_gpt_question)
 
                                     if "".join(str_gpt_clean_question.split()) != "":
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
+                                        print(questions_similarity)
 
                                         df = pd.read_excel('results.xlsx')
                                         try:
-                                            print(str_gpt_clean_question)
+                                            # print(str_gpt_clean_question)
+                                            # df.loc[len(df)] = [
+                                            #     so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
+                                            # ]
+
+                                            #TODO: add excel insert data check
                                             df.loc[len(df)] = [
-                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
+                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, np.nan, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
                                             ]
                                             df.to_excel('results.xlsx', index=False)
-
-
-                                            # if 0.7 <= questions_similarity < 1:
-                                            #     gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                            #     if gpt_answer_dictionary:                           # TODO: test
-                                            #         compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
-                                            #         # answer_comparison = compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
-                                            #         # if not answer_comparison :
-                                            #             # xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                                            #             #     str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
-                                            #             # ]
-                                            #             #
-                                            #             # xl.to_excel('results.xlsx', index=False)
+                                            if 0.7 <= questions_similarity < 1:
+                                                gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                                                if gpt_answer_dictionary:                           # TODO: test
+                                                    # compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                                    answer_comparison = compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                                    # if not answer_comparison :
+                                                    #     df.loc[len(df) - 1 if len(df) > 0 else len(df), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                                                    #         str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
+                                                    #     ]
+                                                    #
+                                                    #     df.to_excel('results.xlsx', index=False)
 
                                         except:
                                             print('err')
-
-                                            break
                                             # print("str_so_api_clean_question = ", str_so_api_clean_question)
                                             # # print(df.loc[len(df),df.columns[len(df.columns) - 1]])
                                             # df.drop(len(df) - 1)
@@ -164,7 +167,6 @@ def compare_process ():
                                             #
                                             # df.to_excel('results.xlsx',  index=False)
                                             # print("rr")
-                            break
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                         if gpt_conversation_num >= 19:        # remove
