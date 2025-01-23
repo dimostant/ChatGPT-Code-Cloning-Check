@@ -50,7 +50,9 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
 
     # remove all whitespaces and check for gpt empty code
-    if "".join(gpt_answer_clean_code.split()) != "":
+    if "".join(gpt_answer_clean_code.split()) == '""': #TODO: check?
+        print("Empty gpt_answer_clean_code")
+    else :
         for so_api_answer in so_api_id_answers_json:
             so_api_answer_body = so_api_answer.get("body", [])
             if so_api_answer_body:                                     #TODO: test
@@ -96,27 +98,38 @@ def compare_process ():
     # iterate through every so_api question
     for so_api_question in so_api_questions_json.get("items", []):
         so_api_question_body = so_api_question.get("body", [])
-        if so_api_question_body :
+        # if so_api_question_body:
+        if not so_api_question_body :
+            print("empty so_api_question_body")
+        else :
             so_api_question_num = so_api_question_num + 1               # remove
             gpt_conversation_num = 0
             so_api_question_id = so_api_question["question_id"]
             str_so_api_question = extract_html_text(so_api_question_body)
             str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
 
-            # leaving this here compare_answers only takes this as parameter and exp calls are minimum
-            if "".join(str_so_api_clean_question.split()) != "":
+            # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
+            if "".join(str_so_api_clean_question.split()) == '""':
+                print("empty so_api question")
+            else:
                 so_api_id_answers_json = []
                 for so_api_id_answers in so_api_answers_json.get("items", []):
                     if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
                         so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
                         break
 
-                if so_api_id_answers_json:                                   # TODO: test
+                # if so_api_id_answers_json:                                   # TODO: test
+                if not so_api_id_answers_json :
+                    print("empty so_api answers json")
+                else :
                     # compare question with every DevGPT question
                     for source in dev_gpt_json.get("Sources", []):
                         for sharing_data in source.get("ChatgptSharing", []):
                             for gpt_conversation in sharing_data.get("Conversations", []):
-                                if gpt_conversation :
+                                # if gpt_conversation :
+                                if not gpt_conversation :
+                                    print("empty gpt conversation")
+                                else :
                                     gpt_conversation_num = gpt_conversation_num + 1
 
                                     print("id : " + str(gpt_conversation_num))
@@ -125,22 +138,36 @@ def compare_process ():
                                     str_gpt_question = json_data_to_str(gpt_question)
                                     str_gpt_clean_question = remove_non_utf8_chars(str_gpt_question)
 
-                                    if "".join(str_gpt_clean_question.split()) != "":
-                                        questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
-                                        print(questions_similarity)
+                                    if "".join(str_gpt_clean_question.split()) == '""':
+                                        df = pd.read_excel('results.xlsx') # are two reads in each if optimal?
 
+                                        df.loc[len(df)] = [
+                                            so_api_question_id, 'Error', gpt_conversation_num, "empty string gpt question", np.nan, np.nan, np.nan, np.nan, np.nan, np.nan               #TODO optimize????
+                                        ]
+
+                                        df.to_excel('results.xlsx', index=False)
+                                    else :
+                                        questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
+
+                                        #import unicodedata
+                                        # print(repr("".join(str_gpt_clean_question.split()))) #TODO: examine
+                                        # cleaned = ''.join(c for c in "".join(str_gpt_clean_question.split()) if unicodedata.category(c)[0] != 'C')
+                                        # print(repr(cleaned))  # Check if it's truly empty
+                                        # print(cleaned == '""')
                                         df = pd.read_excel('results.xlsx')
+
                                         try:
                                             # print(str_gpt_clean_question)
-                                            # df.loc[len(df)] = [
-                                            #     so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
-                                            # ]
+                                            df.loc[len(df)] = [
+                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
+                                            ]
 
                                             #TODO: add excel insert data check
-                                            df.loc[len(df)] = [
-                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, np.nan, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
-                                            ]
+                                            # df.loc[len(df)] = [
+                                            #     so_api_question_id, str_so_api_clean_question, gpt_conversation_num, np.nan, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
+                                            # ]
                                             df.to_excel('results.xlsx', index=False)
+                                            break
                                             if 0.7 <= questions_similarity < 1:
                                                 gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                                                 if gpt_answer_dictionary:                           # TODO: test
@@ -169,14 +196,14 @@ def compare_process ():
                                             # print("rr")
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
-                        if gpt_conversation_num >= 19:        # remove
+                        if gpt_conversation_num >= 17: #9:        # remove
                             print("Break1")     # remove
                             break               # remove
 
-                if so_api_question_num >= 1:              # remove
-                    print("break2")             # remove
-                    break                       # remove
-        break
+        if so_api_question_num >= 1:              # remove
+            print("break2")             # remove
+            break                       # remove
+        # break
 
 ## UNCOMMENT THIS!!!
 # if os.path.basename(os.path.normpath(os.getcwd())) == 'src':

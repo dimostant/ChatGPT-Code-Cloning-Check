@@ -45,9 +45,11 @@ df.drop(df.tail(1).index, inplace=True)
 
 print(df.to_string())
 cols = df.columns.tolist()
-
+df['B'] = 2
 df.loc[len(df)] = ""
-df.loc[len(df) - 1] = "I can confirm puppeteer is installed globally but I'm still getting error:\n\nThe command \"PATH=$PATH:/usr/local/bin:/opt/homebrew/bin NODE_PATH=`npm root -g` node '/home/forge/dev1.rrdevours.monster/vendor/spatie/browsershot/src/../bin/browser.js' '{\"url\":\"https:\\/\\/www.google.com\\/\",\"action\":\"screenshot\",\"options\":{\"type\":\"png\",\"path\":\"example.png\",\"args\":[],\"viewport\":{\"width\":800,\"height\":600}}}'\" failed. Exit Code: 1(General error) Working directory: /home/forge/dev1.rrdevours.monster/public Output:  ================ Error Output: ================ \u001b[1m\u001b[43m\u001b[30m Puppeteer old Headless deprecation warning:"
+# df.loc[len(df) - 1] = "I can confirm puppeteer is installed globally but I'm still getting error:\n\nThe command \"PATH=$PATH:/usr/local/bin:/opt/homebrew/bin NODE_PATH=`npm root -g` node '/home/forge/dev1.rrdevours.monster/vendor/spatie/browsershot/src/../bin/browser.js' '{\"url\":\"https:\\/\\/www.google.com\\/\",\"action\":\"screenshot\",\"options\":{\"type\":\"png\",\"path\":\"example.png\",\"args\":[],\"viewport\":{\"width\":800,\"height\":600}}}'\" failed. Exit Code: 1(General error) Working directory: /home/forge/dev1.rrdevours.monster/public Output:  ================ Error Output: ================ \u001b[1m\u001b[43m\u001b[30m Puppeteer old Headless deprecation warning:"
+df.loc[len(df) - 1] = ["ONNX", 2]
+
 
 # position = datas.find('\xA4')
 # print(position)
