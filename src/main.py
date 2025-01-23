@@ -100,25 +100,24 @@ def compare_process ():
         os.path.join('StackOverflow_api_db', 'db', 'answers.json')
     )
 
-    so_api_question_num = 0                        # remove
+    so_api_question_num = 0
+    break_value = False # remove
     # iterate through every so_api question
     for so_api_question in so_api_questions_json.get("items", []):
+        so_api_question_id = so_api_question["question_id"]
         so_api_question_body = so_api_question.get("body", [])
         # if so_api_question_body:
         if not so_api_question_body :
             df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-
-            df.loc[len(df)] = [
-                so_api_question_id, 'Error : "empty so_api_question_body"', gpt_conversation_num, np.nan, np.nan, np.nan, np.nan,
-                np.nan, np.nan, np.nan  # TODO optimize????
+            column_names = df.columns.tolist()
+            df.loc[len(df), [column_names[0], column_names[1]]] = [
+                so_api_question_id, 'Error : empty so_api_question_body' #TODO: check
             ]
 
             df.to_excel('results.xlsx', index=False)
-            print("empty so_api_question_body")
         else :
             so_api_question_num = so_api_question_num + 1               # remove
             gpt_conversation_num = 0
-            so_api_question_id = so_api_question["question_id"]
             str_so_api_question = extract_html_text(so_api_question_body)
             str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
 
@@ -154,9 +153,9 @@ def compare_process ():
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
                                         df = pd.read_excel('results.xlsx') # are two reads in each if optimal?
-
-                                        df.loc[len(df)] = [
-                                            so_api_question_id, 'Error', gpt_conversation_num, "empty string gpt question", np.nan, np.nan, np.nan, np.nan, np.nan, np.nan               #TODO optimize????
+                                        column_names = df.columns.tolist()
+                                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
+                                            so_api_question_id, 'Error', gpt_conversation_num, "empty string gpt question"
                                         ]
 
                                         df.to_excel('results.xlsx', index=False)
@@ -168,12 +167,15 @@ def compare_process ():
                                         # cleaned = ''.join(c for c in "".join(str_gpt_clean_question.split()) if unicodedata.category(c)[0] != 'C')
                                         # print(repr(cleaned))  # Check if it's truly empty
                                         # print(cleaned == '""')
+
                                         df = pd.read_excel('results.xlsx')
 
                                         try:
+                                            # df = pd.read_excel('results.xlsx') #put outside try
+                                            column_names = df.columns.tolist()
                                             # print(str_gpt_clean_question)
-                                            df.loc[len(df)] = [
-                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
+                                            df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3], column_names[4], column_names[7]]] = [
+                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, gpt_conversation_num
                                             ]
 
                                             #TODO: add excel insert data check
@@ -181,7 +183,7 @@ def compare_process ():
                                             #     so_api_question_id, str_so_api_clean_question, gpt_conversation_num, np.nan, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
                                             # ]
                                             df.to_excel('results.xlsx', index=False)
-                                            break
+
                                             if 0.7 <= questions_similarity < 1:
                                                 gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                                                 if gpt_answer_dictionary:                           # TODO: test
@@ -196,9 +198,9 @@ def compare_process ():
 
                                         except:
                                             print('err')
-                                            # print("str_so_api_clean_question = ", str_so_api_clean_question)
                                             # # print(df.loc[len(df),df.columns[len(df.columns) - 1]])
-                                            # df.drop(len(df) - 1)
+
+                                            df = df.iloc[ :-1, :]
                                             # # df.loc[len(df)] = [
                                             # #     str(so_api_question_num) + " or " + str(gtp_conversation_num) + "Error", np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
                                             # # ]
@@ -206,11 +208,11 @@ def compare_process ():
                                             # # print(df.loc[len(df), 0])
                                             # print("Error")
                                             #
-                                            # df.to_excel('results.xlsx',  index=False)
+                                            df.to_excel('results.xlsx',  index=False)
                                             # print("rr")
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
-                        if gpt_conversation_num >= 17: #9:        # remove
+                        if gpt_conversation_num >= 17 or break_value is True: #9:        # remove
                             print("Break1")     # remove
                             break               # remove
 
