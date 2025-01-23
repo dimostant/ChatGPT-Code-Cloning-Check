@@ -169,19 +169,28 @@ def compare_process ():
                                         # print(cleaned == '""')
 
                                         df = pd.read_excel('results.xlsx')
+                                        column_names = df.columns.tolist()
 
                                         try:
                                             # df = pd.read_excel('results.xlsx') #put outside try
-                                            column_names = df.columns.tolist()
+                                            # column_names = df.columns.tolist()
                                             # print(str_gpt_clean_question)
-                                            df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3], column_names[4], column_names[7]]] = [
-                                                so_api_question_id, str_so_api_clean_question, gpt_conversation_num, str_gpt_clean_question, questions_similarity, gpt_conversation_num
+
+                                            df.loc[len(df), [column_names[0], column_names[1]]] = [
+                                                so_api_question_id, str_so_api_clean_question
                                             ]
 
+                                            df.to_excel('results.xlsx', index=False)
+
+                                            #TODO: throw error for so_api
+
+                                            df.loc[len(df) - 1 if len(df) > 0 else len(df), [column_names[2], column_names[3], column_names[4], column_names[7]]] = [
+                                                gpt_conversation_num, str_gpt_clean_question, questions_similarity, gpt_conversation_num
+                                            ]
+                                            #TODO: throw error for gpt_conversation
+
                                             #TODO: add excel insert data check
-                                            # df.loc[len(df)] = [
-                                            #     so_api_question_id, str_so_api_clean_question, gpt_conversation_num, np.nan, questions_similarity, np.nan, np.nan, gpt_conversation_num, np.nan, np.nan
-                                            # ]
+
                                             df.to_excel('results.xlsx', index=False)
 
                                             if 0.7 <= questions_similarity < 1:
@@ -197,19 +206,24 @@ def compare_process ():
                                                     #     df.to_excel('results.xlsx', index=False)
 
                                         except:
-                                            print('err')
-                                            # # print(df.loc[len(df),df.columns[len(df.columns) - 1]])
+                                            df = df.iloc[:-1, :]
 
-                                            df = df.iloc[ :-1, :]
-                                            # # df.loc[len(df)] = [
-                                            # #     str(so_api_question_num) + " or " + str(gtp_conversation_num) + "Error", np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
-                                            # # ]
-                                            # # print(df.loc[len(df),df.columns[len(df.columns) - 1]])
-                                            # # print(df.loc[len(df), 0])
-                                            # print("Error")
-                                            #
+                                            df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
+                                                so_api_question_num, "Error :  so_api_question not writable", gpt_conversation_num, "or :  gpt clean question not writable"
+                                            ]
+
+                                            #TODO: catch error so_api
+                                            # enable below code
+                                            # df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
+                                            #     so_api_question_num, "Error :  so_api_question not writable", gpt_conversation_num, str_gpt_clean_question
+                                            # ]
+
+                                            #TODO: catch error gpt_conv
+                                            # df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
+                                            #     so_api_question_num, str_gpt_clean_question, gpt_conversation_num, "Error :  gpt clean question not writable"
+                                            # ]
+
                                             df.to_excel('results.xlsx',  index=False)
-                                            # print("rr")
 
                         # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
                         if gpt_conversation_num >= 17 or break_value is True: #9:        # remove
