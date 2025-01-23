@@ -51,6 +51,12 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
 
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) == '""': #TODO: check?
+        xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+        column_names = xl.columns.tolist()
+        xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[6]]] = [ # right prefix?
+            "Error : Empty gpt_answer_clean_code"
+        ]
+        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
         print("Empty gpt_answer_clean_code")
     else :
         for so_api_answer in so_api_id_answers_json:
@@ -100,6 +106,14 @@ def compare_process ():
         so_api_question_body = so_api_question.get("body", [])
         # if so_api_question_body:
         if not so_api_question_body :
+            df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
+
+            df.loc[len(df)] = [
+                so_api_question_id, 'Error : "empty so_api_question_body"', gpt_conversation_num, np.nan, np.nan, np.nan, np.nan,
+                np.nan, np.nan, np.nan  # TODO optimize????
+            ]
+
+            df.to_excel('results.xlsx', index=False)
             print("empty so_api_question_body")
         else :
             so_api_question_num = so_api_question_num + 1               # remove
