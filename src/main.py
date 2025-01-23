@@ -60,28 +60,63 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
         print("Empty gpt_answer_clean_code")
     else :
         for so_api_answer in so_api_id_answers_json:
+            so_api_answer_id = so_api_answer["answer_id"]
             so_api_answer_body = so_api_answer.get("body", [])
-            if so_api_answer_body:                                     #TODO: test
-                so_api_answer_id = so_api_answer["answer_id"]
-                so_api_answer_code = extract_html_code(so_api_answer_body)
-                so_api_answer_clean_code = remove_non_utf8_chars(so_api_answer_code)
+            if not so_api_answer_body:                                     #TODO: test
+                xl = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
+                column_names = xl.columns.tolist()
+                # df.loc[len(df), [column_names[0], column_names[1]]] = [
+                #     so_api_question_id, 'Error : empty so_api_question_body'  # TODO: check
+                # ]
+                #
+                # df.to_excel('results.xlsx', index=False)
+            else :
+                str_so_api_answer_code = extract_html_code(so_api_answer_body)
+                str_so_api_answer_clean_code = remove_non_utf8_chars(str_so_api_answer_code)
+                # to sting?
 
                 # remove all whitespaces check for so_api empty code
-                if "".join(so_api_answer_clean_code.split()) != "":
-                    cloning_percentage = code_cloning_check(gpt_answer_clean_code, so_api_answer_clean_code)
+                if "".join(str_so_api_answer_clean_code.split()) != "":
+                    cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
                     print(cloning_percentage)
 
                     xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+                    row = len(xl) - 1 if len(xl) > 0 else len(xl)
                     column_names = xl.columns.tolist()
                     try :
-                        xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                            so_api_answer_id, so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage
+                        xl.loc[row, [column_names[5], column_names[6]]] = [
+                            so_api_answer_id, str_so_api_answer_clean_code
                         ]
                         xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
-                        return True
+
+                        xl.loc[row, [column_names[8], column_names[9]]] = [
+                            gpt_answer_clean_code, cloning_percentage
+                        ]
+                        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
                     except :
-                        print("Error Answers")
-                        return False
+                        # df = df.iloc[:-1, :]
+
+                        #TODO: both can be right
+                        xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                            so_api_answer_id, "Error :  so_api_answer_clean_code not writable", xl.iloc[row, column_names[7]], "or :  gpt clean question not writable" #is iloc right?
+                        ]
+
+                        #TODO: catch error so_api
+                        # xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                        #     so_api_answer_id, "Error :  so_api_answer_clean_code not writable", xl.iloc[row, column_names[7]], gpt_answer_clean_code #is iloc right?
+                        # ]
+                        # catch error gpt_answer
+                        # xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
+                        #     so_api_answer_id, str_so_api_answer_clean_code, xl.iloc[row, column_names[7]], "Error :  gpt clean question not writable" #is iloc right?
+                        # ]
+
+                        print(
+                            f'Error at ->  so_api_answer_id : { so_api_answer_id} |\n'
+                            + str_so_api_answer_clean_code
+                            + f' gpt_conversation_num : {xl.iloc[row, column_names[7]]}'
+                            + '|\n' + gpt_answer_clean_code
+                        )
+
 
 
 def compare_process ():
@@ -146,13 +181,13 @@ def compare_process ():
                                     gpt_conversation_num = gpt_conversation_num + 1
 
                                     print("id : " + str(gpt_conversation_num))
-                                    # print("###################################################################################################################################################")# remove
                                     gpt_question = get_conversation_question(gpt_conversation)
                                     str_gpt_question = json_data_to_str(gpt_question)
                                     str_gpt_clean_question = remove_non_utf8_chars(str_gpt_question)
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
                                         df = pd.read_excel('results.xlsx') # are two reads in each if optimal?
+
                                         column_names = df.columns.tolist()
                                         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
                                             so_api_question_id, 'Error', gpt_conversation_num, "empty string gpt question"
@@ -196,14 +231,7 @@ def compare_process ():
                                             if 0.7 <= questions_similarity < 1:
                                                 gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                                                 if gpt_answer_dictionary:                           # TODO: test
-                                                    # compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
-                                                    answer_comparison = compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
-                                                    # if not answer_comparison :
-                                                    #     df.loc[len(df) - 1 if len(df) > 0 else len(df), [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                                                    #         str(so_api_question_num) + " " + str(gtp_conversation_num) + "Error"
-                                                    #     ]
-                                                    #
-                                                    #     df.to_excel('results.xlsx', index=False)
+                                                    compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
 
                                         except:
                                             df = df.iloc[:-1, :]
@@ -211,6 +239,13 @@ def compare_process ():
                                             df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
                                                 so_api_question_num, "Error :  so_api_question not writable", gpt_conversation_num, "or :  gpt clean question not writable"
                                             ]
+
+                                            print(
+                                                f'Error at -> so_api_question_num : {so_api_question_num} |\n'
+                                                  + str_so_api_clean_question
+                                                  + f' gpt_conversation_num : {gpt_conversation_num}'
+                                                  + '|\n' + str_gpt_clean_question
+                                            )
 
                                             #TODO: catch error so_api
                                             # enable below code
