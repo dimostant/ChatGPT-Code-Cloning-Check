@@ -53,6 +53,26 @@ def remove_non_utf8_chars(text):
 
     return clean_text
 
+def calculate_clone_percentage(simian_output):
+    duplicate_lines_line = re.search(r'Found \d+ duplicate lines in \d+ blocks in \d+ files', simian_output)
+    if not duplicate_lines_line:
+        duplicate_lines = 0
+    else:
+        duplicate_lines = int(re.search(r'\d+', duplicate_lines_line.group()).group())
+
+    print(duplicate_lines)
+    total_lines_line = re.search(r'Processed a total of \d+ significant \((\d+) raw\) lines in \d+ files',
+                                 simian_output)
+    if not total_lines_line:
+        total_lines = 0
+    else:
+        total_lines = int(re.search(r'\d+', total_lines_line.group()).group())
+
+    print(total_lines)
+
+    if total_lines != 0:
+        return (duplicate_lines / total_lines) * 100
+
 def code_cloning_check(gpt_answer_code, so_api_answer_code):
     print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
 
@@ -74,8 +94,10 @@ def code_cloning_check(gpt_answer_code, so_api_answer_code):
             text=True, capture_output=True # check=True
         )
 
+        simian_output = ''.join(simian.stdout.splitlines(keepends=True)[4:-1])
+
     finally:
         os.remove(code1_file.name)
         os.remove(code2_file.name)
 
-    return ''.join(simian.stdout.splitlines(keepends=True)[4:-2]) #TODO:convert simian results to percentage
+    return calculate_clone_percentage(simian_output)
