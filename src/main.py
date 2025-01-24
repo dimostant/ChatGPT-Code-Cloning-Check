@@ -1,7 +1,6 @@
 import os
 
 import pandas as pd
-import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
@@ -65,15 +64,14 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
             if not so_api_answer_body:                                     #TODO: test
                 xl = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
                 column_names = xl.columns.tolist()
-                # df.loc[len(df), [column_names[0], column_names[1]]] = [
-                #     so_api_question_id, 'Error : empty so_api_question_body'  # TODO: check
-                # ]
-                #
-                # df.to_excel('results.xlsx', index=False)
+                xl.loc[len(xl), [column_names[5], column_names[6]]] = [
+                    so_api_answer_id, 'Error : empty so_api_question_body'  # TODO: check
+                ]
+
+                xl.to_excel('results.xlsx', index=False)
             else :
                 str_so_api_answer_code = extract_html_code(so_api_answer_body)
                 str_so_api_answer_clean_code = remove_non_utf8_chars(str_so_api_answer_code)
-                # to sting?
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(str_so_api_answer_clean_code.split()) != "":
