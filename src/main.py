@@ -56,7 +56,6 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
             "Error : Empty gpt_answer_clean_code"
         ]
         xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
-        print("Empty gpt_answer_clean_code")
     else :
         for so_api_answer in so_api_id_answers_json:
             so_api_answer_id = so_api_answer["answer_id"]
@@ -74,7 +73,14 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
                 str_so_api_answer_clean_code = remove_non_utf8_chars(str_so_api_answer_code)
 
                 # remove all whitespaces check for so_api empty code
-                if "".join(str_so_api_answer_clean_code.split()) != "":
+                if "".join(str_so_api_answer_clean_code.split()) == '""':
+                    xl = pd.read_excel('results.xlsx')
+                    column_names = xl.columns.tolist()
+                    xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[8]]] = [  # right prefix?
+                        so_api_answer_id, "Error : Empty so_api_answer_clean_code"
+                    ]
+                    xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                else :
                     cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
                     print(cloning_percentage)
 
@@ -92,11 +98,11 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
                         ]
                         xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
                     except :
-                        # df = df.iloc[:-1, :]
+                        # xl = xl.iloc[:-1, :]
 
                         #TODO: both can be right
                         xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                            so_api_answer_id, "Error :  so_api_answer_clean_code not writable", xl.iloc[row, column_names[7]], "or :  gpt clean question not writable" #is iloc right?
+                            so_api_answer_id, "Error :  so_api_answer_clean_code not writable", xl.iloc[row, column_names[7]], "and :  gpt clean question not writable" #is iloc right?
                         ]
 
                         #TODO: catch error so_api
@@ -139,7 +145,6 @@ def compare_process ():
     for so_api_question in so_api_questions_json.get("items", []):
         so_api_question_id = so_api_question["question_id"]
         so_api_question_body = so_api_question.get("body", [])
-        # if so_api_question_body:
         if not so_api_question_body :
             df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
             column_names = df.columns.tolist()
@@ -235,7 +240,7 @@ def compare_process ():
                                             df = df.iloc[:-1, :]
 
                                             df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
-                                                so_api_question_num, "Error :  so_api_question not writable", gpt_conversation_num, "or :  gpt clean question not writable"
+                                                so_api_question_num, "Error :  so_api_question not writable", gpt_conversation_num, "and :  gpt clean question not writable"
                                             ]
 
                                             print(
