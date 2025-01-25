@@ -173,7 +173,7 @@ def compare_process ():
                     df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
                     column_names = df.columns.tolist()
                     df.loc[len(df), [column_names[0], column_names[1]]] = [
-                        so_api_question_id, 'Error : question have no answers'                     # TODO: check
+                        so_api_question_id, 'Error : question has no answers'                     # TODO: check
                     ]
                     df.to_excel('results.xlsx', index=False)
                 else :
@@ -208,7 +208,7 @@ def compare_process ():
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
                                         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
-                                            so_api_question_id, str_so_api_clean_question, gpt_num, "empty string gpt question"
+                                            so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"
                                         ]
                                         df.to_excel('results.xlsx', index=False)
 
@@ -229,7 +229,7 @@ def compare_process ():
 
                                             df.to_excel('results.xlsx', index=False)
 
-                                        except :
+                                        except:
                                             df.loc[len(df), [column_names[0], column_names[1]]] = [
                                                 so_api_question_num, "Error :  so_api_question not writable"
                                             ]
@@ -254,16 +254,16 @@ def compare_process ():
                                         except:
 
                                             df.loc[len(df) - 1, [column_names[2], column_names[3]]] = [
-                                                gpt_conversation_num, "Error :  gpt clean question not writable"
+                                                gpt_num, "Error :  gpt clean question not writable"
                                             ]
                                             df.to_excel('results.xlsx',  index=False)
 
                                             print(
-                                                f'Error at -> gpt_conversation_num : gpt__num'
+                                                f'Error at -> gpt_conversation_num :' + gpt_num
                                                   + '|\n' + str_gpt_clean_question
                                             )
 
-                        # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
+        #                 # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
         #                 if gpt_conversation_num >= 17 or break_value is True: #9:        # remove
         #                     print("Break1")     # remove
         #                     break               # remove
@@ -276,9 +276,16 @@ def compare_process ():
 ## UNCOMMENT THIS!!!
 # if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
 #     os.chdir('..')
+
 os.remove('results.xlsx')
 os.popen("copy " + str('resultsC.xlsx') + " " + str('results.xlsx'))
 compare_process()
+
+
+
+
+
+
 
 # TODO: check for empty question and others empty things like this ( i think {}) EVERYWHERE
 #  refactor json functions (what did i mean)
