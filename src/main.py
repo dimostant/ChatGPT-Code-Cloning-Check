@@ -43,81 +43,79 @@ def compare_questions(api_question, gpt_question):                              
 
     return cosine
 
+
 def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might change to answers
     # TODO: complete and test if "remove" function provides code safe to be compared
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
 
+    xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+    column_names = xl.columns.tolist()
+
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) == '""': #TODO: check?
-        xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-        column_names = xl.columns.tolist()
-        xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[6]]] = [ # right prefix?
+        xl.loc[len(xl) - 1, [column_names[6]]] = [ # right prefix?
             "Error : Empty gpt_answer_clean_code"
         ]
         xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+
     else :
         for so_api_answer in so_api_id_answers_json:
             so_api_answer_id = so_api_answer["answer_id"]
             so_api_answer_body = so_api_answer.get("body", [])
             if not so_api_answer_body:                                     #TODO: test
-                xl = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-                column_names = xl.columns.tolist()
-                xl.loc[len(xl), [column_names[5], column_names[6]]] = [
+                xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
                     so_api_answer_id, 'Error : empty so_api_question_body'  # TODO: check
                 ]
-
                 xl.to_excel('results.xlsx', index=False)
+
             else :
                 str_so_api_answer_code = extract_html_code(so_api_answer_body)
                 str_so_api_answer_clean_code = remove_non_utf8_chars(str_so_api_answer_code)
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(str_so_api_answer_clean_code.split()) == '""':
-                    xl = pd.read_excel('results.xlsx')
-                    column_names = xl.columns.tolist()
-                    xl.loc[len(xl) - 1 if len(xl) > 0 else len(xl), [column_names[5], column_names[8]]] = [  # right prefix?
+                    xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = [  # right prefix?
                         so_api_answer_id, "Error : Empty so_api_answer_clean_code"
                     ]
                     xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+
                 else :
                     cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
                     print(cloning_percentage)
 
                     xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-                    row = len(xl) - 1 if len(xl) > 0 else len(xl)
                     column_names = xl.columns.tolist()
+
                     try :
-                        xl.loc[row, [column_names[5], column_names[6]]] = [
+                        xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
                             so_api_answer_id, str_so_api_answer_clean_code
                         ]
                         xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
-                        xl.loc[row, [column_names[8], column_names[9]]] = [
-                            gpt_answer_clean_code, cloning_percentage
-                        ]
-                        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
                     except :
-                        # xl = xl.iloc[:-1, :]
-
-                        #TODO: both can be right
-                        xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                            so_api_answer_id, "Error :  so_api_answer_clean_code not writable", xl.iloc[row, column_names[7]], "and :  gpt clean question not writable" #is iloc right?
+                        xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
+                            so_api_answer_id, "Error :  so_api_answer_clean_code not writable"
                         ]
-
-                        #TODO: catch error so_api
-                        # xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                        #     so_api_answer_id, "Error :  so_api_answer_clean_code not writable", xl.iloc[row, column_names[7]], gpt_answer_clean_code #is iloc right?
-                        # ]
-                        # catch error gpt_answer
-                        # xl.loc[row, [column_names[5], column_names[6], column_names[8], column_names[9]]] = [
-                        #     so_api_answer_id, str_so_api_answer_clean_code, xl.iloc[row, column_names[7]], "Error :  gpt clean question not writable" #is iloc right?
-                        # ]
 
                         print(
                             f'Error at ->  so_api_answer_id : { so_api_answer_id} |\n'
                             + str_so_api_answer_clean_code
-                            + f' gpt_conversation_num : {xl.iloc[row, column_names[7]]}'
+                        )
+
+                    try :
+                        xl.loc[len(xl) - 1, [column_names[8], column_names[9]]] = [
+                            gpt_answer_clean_code, cloning_percentage
+                        ]
+                        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+
+                    except :
+                        xl.loc[len(xl) - 1, [ column_names[8], column_names[9]]] = [
+                            "Error :  gpt clean question not writable", cloning_percentage
+                        ]
+
+                        print(
+                            f'Error at -> gpt_conversation_num : {xl.iloc[len(xl) - 1, column_names[7]]}'
                             + '|\n' + gpt_answer_clean_code
                         )
 
@@ -191,6 +189,7 @@ def compare_process ():
                                 df = pd.read_excel('results.xlsx')
                                 column_names = df.columns.tolist()
 
+                                #TODO: log gtp problems by Source/Sharing_data/conversation
                                 if not gpt_conversation :
                                     df.loc[len(df), [column_names[0], column_names[1], column_names[2],
                                                      column_names[3]]] = [
