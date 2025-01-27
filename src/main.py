@@ -46,19 +46,16 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
     gpt_answer_clean_code = clean_text(gpt_answer_code)
 
     # remove all whitespaces and check for gpt empty code
-    if "".join(gpt_answer_clean_code.split()) == '""':                                             #TODO: check?
-        xl.loc[len(xl) - 1, [column_names[6]]] = [ # right prefix?
-            "Error : Empty gpt_answer_clean_code"
-        ]
+    if "".join(gpt_answer_clean_code.split()) == '""':
+        xl.loc[len(xl) - 1, [column_names[6]]] = ["Error : Empty gpt_answer_clean_code"]            # TODO: check? # right prefix?
 
     else :
         for so_api_answer in so_api_id_answers_json:
             so_api_answer_id = so_api_answer["answer_id"]
             so_api_answer_body = so_api_answer.get("body", [])
-            if not so_api_answer_body:                                                              #TODO: test
+            if not so_api_answer_body:                                                              # TODO: test
                 xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
-                    so_api_answer_id, 'Error : empty so_api_question_body'                         # TODO: check
-                ]
+                    so_api_answer_id, 'Error : empty so_api_question_body']                         # TODO: check
 
             else :
                 str_so_api_answer_code = extract_html_code(so_api_answer_body)
@@ -66,43 +63,36 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(str_so_api_answer_clean_code.split()) == '""':
-                    xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = [  # right prefix?
-                        so_api_answer_id, "Error : Empty so_api_answer_clean_code"
-                    ]
+                    xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = [so_api_answer_id, "Error : Empty so_api_answer_clean_code"] # right prefix?
 
                 else :
                     cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
                     print(cloning_percentage)
 
-                    try :
-                        xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
-                            so_api_answer_id, str_so_api_answer_clean_code
-                        ]
+                    xl.loc[len(xl) - 1, [column_names[5], column_names[6], column_names[8], column_names[9]]] = \
+                        [so_api_answer_id, str_so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage]
 
-                    except :
-                        xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
-                            so_api_answer_id, "Error :  so_api_answer_clean_code not writable"
-                        ]
+                    # try :
+                    #     xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [so_api_answer_id, str_so_api_answer_clean_code]
 
-                        print(
-                            f'Error at ->  so_api_answer_id : { so_api_answer_id} |\n'
-                            + str_so_api_answer_clean_code
-                        )
+                    # except Exception as e:
+                    #     xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [so_api_answer_id, "Error :  so_api_answer_clean_code not writable"]
+                    #
+                    #     print(
+                    #         f'Exception : {e} \nError at ->  so_api_answer_id : { so_api_answer_id} |\n'
+                    #         + str_so_api_answer_clean_code
+                    #     )
 
-                    try :
-                        xl.loc[len(xl) - 1, [column_names[8], column_names[9]]] = [
-                            gpt_answer_clean_code, cloning_percentage
-                        ]
+                    # try :
+                    #     xl.loc[len(xl) - 1, [column_names[8], column_names[9]]] = [gpt_answer_clean_code, cloning_percentage]
 
-                    except :
-                        xl.loc[len(xl) - 1, [ column_names[8], column_names[9]]] = [
-                            "Error :  gpt clean question not writable", cloning_percentage
-                        ]
-
-                        print(
-                            f'Error at -> gpt_conversation_num : {xl.iloc[len(xl) - 1, column_names[7]]}'
-                            + '|\n' + gpt_answer_clean_code
-                        )
+                    # except Exception as e:
+                    #     xl.loc[len(xl) - 1, [ column_names[8], column_names[9]]] = ["Error :  gpt clean question not writable", cloning_percentage]
+                    #
+                    #     print(
+                    #         f'Exception : {e} \nError at -> gpt_conversation_num : {xl.iloc[len(xl) - 1, column_names[7]]}'
+                    #         + '|\n' + gpt_answer_clean_code
+                    #     )
 
 
 
@@ -123,9 +113,7 @@ def compare_process ():
         so_api_question_body = so_api_question.get("body", [])
 
         if not so_api_question_body :
-            df.loc[len(df), [column_names[0], column_names[1]]] = [
-                so_api_question_id, 'Error : empty so_api_question_body'                             #TODO: check
-            ]
+            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_body']                             #TODO: check
 
         else :
             str_so_api_question = extract_html_text(so_api_question_body)
@@ -133,9 +121,7 @@ def compare_process ():
 
             # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
             if "".join(str_so_api_clean_question.split()) == '""':
-                df.loc[len(df), [column_names[0], column_names[1]]] = [
-                    so_api_question_id, 'Error : empty so_api_question'                             # TODO: check
-                ]
+                df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question']                             # TODO: check
             else:
                 so_api_id_answers_json = []
                 for so_api_id_answers in so_api_answers_json.get("items", []):
@@ -143,10 +129,8 @@ def compare_process ():
                         so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
                         break
 
-                if not so_api_id_answers_json :                                                     # TODO: test
-                    df.loc[len(df), [column_names[0], column_names[1]]] = [
-                        so_api_question_id, 'Error : question has no answers'                     # TODO: check
-                    ]
+                if not so_api_id_answers_json :                                                                                                         # TODO: test
+                    df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : question has no answers']                       # TODO: check
 
                 else :
                     # compare question with every DevGPT question
@@ -157,11 +141,7 @@ def compare_process ():
                                 print("id : " + str(gpt_num))
 
                                 if not gpt_conversation :
-                                    df.loc[len(df), [column_names[0], column_names[1], column_names[2],
-                                                     column_names[3]]] = [
-                                        so_api_question_id, str_so_api_clean_question, gpt_num,
-                                        "empty gpt conversation"
-                                    ]
+                                    df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt conversation"]
 
                                 else :
                                     gpt_question = get_conversation_question(gpt_conversation)
@@ -169,58 +149,43 @@ def compare_process ():
                                     str_gpt_clean_question = clean_text(str_gpt_question)
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
-                                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
-                                            so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"
-                                        ]
+                                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"]
 
                                     else :
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
 
-                                        # TODO: add excel insert data check
-                                        #import unicodedata
-                                        # print(repr("".join(str_gpt_clean_question.split()))) #TODO: examine
-                                        # cleaned = ''.join(c for c in "".join(str_gpt_clean_question.split()) if unicodedata.category(c)[0] != 'C')
-                                        # print(repr(cleaned))  # Check if it's truly empty
-                                        # print(cleaned == '""')
+                                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3], column_names[4],column_names[7]]] = \
+                                            [so_api_question_id, str_so_api_clean_question, gpt_num, str_gpt_clean_question, questions_similarity, gpt_num]
 
-                                        try :
-                                            df.loc[len(df), [column_names[0], column_names[1]]] = [
-                                                so_api_question_id, str_so_api_clean_question
-                                            ]
 
-                                            df.to_excel('results.xlsx', index=False)
-
-                                        except:
-                                            df.loc[len(df), [column_names[0], column_names[1]]] = [
-                                                so_api_question_index, "Error :  so_api_question not writable"
-                                            ]
-
-                                            print(
-                                                f'Error at -> so_api_question_index : {so_api_question_index} |\n'
-                                                  + str_so_api_clean_question
-                                            )
-
-                                        try :
-                                            df.loc[len(df) - 1, [column_names[2], column_names[3], column_names[4], column_names[7]]] = [
-                                                gpt_num, str_gpt_clean_question, questions_similarity, gpt_num
-                                            ]
-                                            df.to_excel('results.xlsx', index=False)
-
-                                            if 0.7 <= questions_similarity < 1:
-                                                gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                                if gpt_answer_dictionary:                                   # TODO: test
-                                                    compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
-
-                                        except:
-
-                                            df.loc[len(df) - 1, [column_names[2], column_names[3]]] = [
-                                                gpt_num, "Error :  gpt clean question not writable"
-                                            ]
-
-                                            print(
-                                                f'Error at -> gpt_conversation_index :' + gpt_num
-                                                  + '|\n' + str_gpt_clean_question
-                                            )
+                                        # try :
+                                        #     df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, str_so_api_clean_question]
+                                        #     df.to_excel('results.xlsx', index=False)
+                                        #
+                                        # except Exception as e:
+                                        #     df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_index, "Error :  so_api_question not writable"]
+                                        #
+                                        #     print(
+                                        #         f'Exception : {e} \nError at -> so_api_question_index : {so_api_question_index} |\n'
+                                        #           + str_so_api_clean_question
+                                        #     )
+                                        #
+                                        # try :
+                                        #     df.loc[len(df) - 1, [column_names[2], column_names[3], column_names[4], column_names[7]]] = [gpt_num, str_gpt_clean_question, questions_similarity, gpt_num]
+                                        #     df.to_excel('results.xlsx', index=False)
+                                        #
+                                        #     if 0.7 <= questions_similarity < 1:
+                                        #         gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                                        #         if gpt_answer_dictionary:                                   # TODO: test
+                                        #             compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
+                                        #
+                                        # except Exception as e:
+                                        #     df.loc[len(df) - 1, [column_names[2], column_names[3]]] = [gpt_num, "Error :  gpt clean question not writable"]
+                                        #
+                                        #     print(
+                                        #         f'Exception : {e} \nError at -> gpt_conversation_index :' + gpt_num
+                                        #           + '|\n' + str_gpt_clean_question
+                                        #     )
 
         #                 if gpt_source_index >= 18:
         #                     break

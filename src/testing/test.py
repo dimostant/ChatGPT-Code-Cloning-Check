@@ -50,6 +50,13 @@ clean_text = clean_text(clean_text)
 df.loc[len(df) - 1] = clean_text
 # df.loc[len(df) - 1] = ["ONNX", 2]
 
+# TODO: add excel insert data check
+#  import unicodedata
+#  print(repr("".join(str_gpt_clean_question.split()))) #TODO: examine
+#  cleaned = ''.join(c for c in "".join(str_gpt_clean_question.split()) if unicodedata.category(c)[0] != 'C')
+#  print(repr(cleaned))  # Check if it's truly empty
+#  print(cleaned == '""')
+
 
 # position = datas.find('\xA4')
 # print(position)
