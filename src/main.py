@@ -6,12 +6,14 @@ from nltk.tokenize import word_tokenize
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars, code_cloning_check
+from src.code_handling import remove_ansi_escape_sequences
+
+sw = stopwords.words('english')
 
 def compare_questions(api_question, gpt_question):                                                         #TODO: test
     x_list = word_tokenize(api_question)
     y_list = word_tokenize(gpt_question)
 
-    sw = stopwords.words('english')
     l1 = []
     l2 = []
 
@@ -36,25 +38,25 @@ def compare_questions(api_question, gpt_question):                              
         c += l1[i] * l2[i]
 
     cosine = c / float((sum(l1) * sum(l2)) ** 0.5)
-    # print("similarity: ", cosine)
 
     return cosine
 
 
-def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might change to answers
+def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_names): #might change to answers
     # TODO: complete and test if "remove" function provides code safe to be compared
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
+    gpt_answer_clean_code = remove_ansi_escape_sequences(gpt_answer_clean_code)
 
-    xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-    column_names = xl.columns.tolist()
+    # xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+    # column_names = xl.columns.tolist()
 
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) == '""':                                             #TODO: check?
         xl.loc[len(xl) - 1, [column_names[6]]] = [ # right prefix?
             "Error : Empty gpt_answer_clean_code"
         ]
-        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+        #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
     else :
         for so_api_answer in so_api_id_answers_json:
@@ -64,31 +66,32 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
                 xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
                     so_api_answer_id, 'Error : empty so_api_question_body'                         # TODO: check
                 ]
-                xl.to_excel('results.xlsx', index=False)
+                #xl.to_excel('results.xlsx', index=False)
 
             else :
                 str_so_api_answer_code = extract_html_code(so_api_answer_body)
                 str_so_api_answer_clean_code = remove_non_utf8_chars(str_so_api_answer_code)
+                str_so_api_answer_clean_code = remove_ansi_escape_sequences(str_so_api_answer_clean_code)
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(str_so_api_answer_clean_code.split()) == '""':
                     xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = [  # right prefix?
                         so_api_answer_id, "Error : Empty so_api_answer_clean_code"
                     ]
-                    xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                    #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                 else :
                     cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
                     print(cloning_percentage)
 
-                    xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-                    column_names = xl.columns.tolist()
+                    #xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
+                    #column_names = xl.columns.tolist()
 
                     try :
                         xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
                             so_api_answer_id, str_so_api_answer_clean_code
                         ]
-                        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                        #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                     except :
                         xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
@@ -104,7 +107,7 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary): #might chang
                         xl.loc[len(xl) - 1, [column_names[8], column_names[9]]] = [
                             gpt_answer_clean_code, cloning_percentage
                         ]
-                        xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
+                        #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                     except :
                         xl.loc[len(xl) - 1, [ column_names[8], column_names[9]]] = [
@@ -134,6 +137,9 @@ def compare_process ():
         os.path.join('StackOverflow_api_db', 'db', 'answers.json')
     )
 
+    df = pd.read_excel('results.xlsx')
+    column_names = df.columns.tolist()
+
     so_api_question_num = 0
     # break_value = False # remove
     # iterate through every so_api question
@@ -142,26 +148,27 @@ def compare_process ():
         so_api_question_body = so_api_question.get("body", [])
 
         if not so_api_question_body :
-            df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-            column_names = df.columns.tolist()
+            # df = pd.read_excel('results.xlsx')
+            # column_names = df.columns.tolist()
             df.loc[len(df), [column_names[0], column_names[1]]] = [
                 so_api_question_id, 'Error : empty so_api_question_body'                             #TODO: check
             ]
-            df.to_excel('results.xlsx', index=False)
+            # df.to_excel('results.xlsx', index=False)
 
         else :
             so_api_question_num = so_api_question_num + 1
             str_so_api_question = extract_html_text(so_api_question_body)
-            str_so_api_clean_question = remove_non_utf8_chars(str_so_api_question)
+            str_so_api_clean_question = remove_ansi_escape_sequences(str_so_api_question)
+            str_so_api_clean_question = remove_non_utf8_chars(str_so_api_clean_question)
 
             # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
             if "".join(str_so_api_clean_question.split()) == '""':
-                df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-                column_names = df.columns.tolist()
+                # df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
+                # column_names = df.columns.tolist()
                 df.loc[len(df), [column_names[0], column_names[1]]] = [
                     so_api_question_id, 'Error : empty so_api_question'                             # TODO: check
                 ]
-                df.to_excel('results.xlsx', index=False)
+                # df.to_excel('results.xlsx', index=False)
             else:
                 so_api_id_answers_json = []
                 for so_api_id_answers in so_api_answers_json.get("items", []):
@@ -170,12 +177,12 @@ def compare_process ():
                         break
 
                 if not so_api_id_answers_json :                                                     # TODO: test
-                    df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-                    column_names = df.columns.tolist()
+                    # df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
+                    # column_names = df.columns.tolist()
                     df.loc[len(df), [column_names[0], column_names[1]]] = [
                         so_api_question_id, 'Error : question has no answers'                     # TODO: check
                     ]
-                    df.to_excel('results.xlsx', index=False)
+                    # df.to_excel('results.xlsx', index=False)
                 else :
                     # compare question with every DevGPT question
                     gpt_source_num = 0
@@ -187,11 +194,11 @@ def compare_process ():
                             gpt_conversation_num = 0
                             for gpt_conversation in sharing_data.get("Conversations", []):
                                 gpt_conversation_num = gpt_conversation_num + 1
-                                print("id : " + str(gpt_conversation_num))
-                                gpt_num = str(gpt_source_num) + "/" + str(gpt_sharing_num) + "/"+ str(gpt_conversation_num)
+                                gpt_num = str(gpt_source_num) + "|" + str(gpt_sharing_num) + "|"+ str(gpt_conversation_num)
+                                print("id : " + str(gpt_num))
 
-                                df = pd.read_excel('results.xlsx')
-                                column_names = df.columns.tolist()
+                                # df = pd.read_excel('results.xlsx')
+                                # column_names = df.columns.tolist()
 
                                 #TODO: log gtp problems by Source/Sharing_data/conversation
                                 if not gpt_conversation :
@@ -200,17 +207,18 @@ def compare_process ():
                                         so_api_question_id, str_so_api_clean_question, gpt_num,
                                         "empty gpt conversation"
                                     ]
-                                    df.to_excel('results.xlsx', index=False)
+                                    # df.to_excel('results.xlsx', index=False)
                                 else :
                                     gpt_question = get_conversation_question(gpt_conversation)
                                     str_gpt_question = json_data_to_str(gpt_question)
                                     str_gpt_clean_question = remove_non_utf8_chars(str_gpt_question)
+                                    str_gpt_clean_question = remove_ansi_escape_sequences(str_gpt_clean_question)
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
                                         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
                                             so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"
                                         ]
-                                        df.to_excel('results.xlsx', index=False)
+                                        # df.to_excel('results.xlsx', index=False)
 
                                     else :
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
@@ -233,7 +241,7 @@ def compare_process ():
                                             df.loc[len(df), [column_names[0], column_names[1]]] = [
                                                 so_api_question_num, "Error :  so_api_question not writable"
                                             ]
-                                            df.to_excel('results.xlsx', index=False)
+                                            # df.to_excel('results.xlsx', index=False)
 
                                             print(
                                                 f'Error at -> so_api_question_num : {so_api_question_num} |\n'
@@ -249,31 +257,26 @@ def compare_process ():
                                             if 0.7 <= questions_similarity < 1:
                                                 gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                                                 if gpt_answer_dictionary:                                   # TODO: test
-                                                    compare_answers(so_api_id_answers_json, gpt_answer_dictionary)
+                                                    compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
 
                                         except:
 
                                             df.loc[len(df) - 1, [column_names[2], column_names[3]]] = [
                                                 gpt_num, "Error :  gpt clean question not writable"
                                             ]
-                                            df.to_excel('results.xlsx',  index=False)
+                                            # df.to_excel('results.xlsx',  index=False)
 
                                             print(
                                                 f'Error at -> gpt_conversation_num :' + gpt_num
                                                   + '|\n' + str_gpt_clean_question
                                             )
 
-        #                 # inner conv increase the counter e.g. 1 2 3, 3 seen out. 4 5, 5 out. "if" checks out the loop so need >=
-        #                 if gpt_conversation_num >= 17 or break_value is True: #9:        # remove
-        #                     print("Break1")     # remove
-        #                     break               # remove
-        #
-        # if so_api_question_num >= 1:              # remove
-        #     print("break2")             # remove
-        #     break                       # remove
+        #                 if gpt_source_num >= 18:
+        #                     break
         # break
+    # df.to_excel('results.xlsx', index=False)
 
-## UNCOMMENT THIS!!!
+# # UNCOMMENT THIS!!!
 # if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
 #     os.chdir('..')
 
@@ -296,7 +299,7 @@ compare_process()
 #  only compare with python code from DevGPT, extra code that confirms its python code? where? ( at answer code extraction function? at data retrieval? after data retrieval? )
 #  should answer comparison of < 0.7 be ignored?
 #  should question line in excel appear with the answers
-#  check for comparison question or answer errors that go unnoticed in excel. eg. cloning percnetage missing
+#  check for comparison question or answer errors that go unnoticed in excel. eg. cloning percentage missing
 
 
 #TODO: future considerations:

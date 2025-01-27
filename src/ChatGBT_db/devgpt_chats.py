@@ -12,8 +12,8 @@ def get_json_data(file_path):
         return json.load(file)
 
 # TODO: fix access safety issue with these functions
-def get_user_conversation(json_data, user, conversation):
-    user_conversation = json_data["Sources"][user]["ChatgptSharing"][0]["Conversations"][conversation]
+def get_user_conversation(json_data, user, sharing, conversation):
+    user_conversation = json_data["Sources"][user]["ChatgptSharing"][sharing]["Conversations"][conversation]
     return user_conversation
 
 def get_conversation_question(user_conversation):
