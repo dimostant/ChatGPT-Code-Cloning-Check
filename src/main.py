@@ -1,49 +1,40 @@
 import os
 
 import pandas as pd
+import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from sklearn.feature_extraction.text import CountVectorizer
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, clean_text, code_cloning_check
 
-sw = stopwords.words('english')
+STOPWORDS = stopwords.words('english')
 
-def compare_questions(api_question, gpt_question):                                                         #TODO: test
-    x_list = word_tokenize(api_question)
-    y_list = word_tokenize(gpt_question)
+def preprocess_question(question):
+    """Tokenizes and removes stopwords from a question."""
+    return [word.lower() for word in word_tokenize(question) if word.lower() not in STOPWORDS]
 
-    l1 = []
-    l2 = []
+def compare_questions(api_question, gpt_question):
+    """Calculates cosine similarity between two preprocessed questions."""
+    # Preprocess questions
+    api_tokens = preprocess_question(api_question)
+    gpt_tokens = preprocess_question(gpt_question)
 
-    x_set = {w for w in x_list if not w in sw}
-    y_set = {w for w in y_list if not w in sw}
+    # Use CountVectorizer to compute word frequency vectors
+    vectorizer = CountVectorizer(analyzer=lambda x: x)
+    vectors = vectorizer.fit_transform([api_tokens, gpt_tokens]).toarray()
 
-    r_vector = x_set.union(y_set)
+    # Calculate cosine similarity
+    numerator = np.dot(vectors[0], vectors[1])
+    denominator = np.linalg.norm(vectors[0]) * np.linalg.norm(vectors[1])
 
-    for w in r_vector:
-        if w in x_set:
-            l1.append(1)
-        else:
-            l1.append(0)
-        if w in y_set:
-            l2.append(1)
-        else:
-            l2.append(0)
-    c = 0
-
-    # cosine formula
-    for i in range(len(r_vector)):
-        c += l1[i] * l2[i]
-
-    cosine = c / float((sum(l1) * sum(l2)) ** 0.5)
-
-    return cosine
+    # Return cosine similarity, handle zero-vector edge case
+    return numerator / denominator if denominator != 0 else 0.0
 
 
 def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names): #might change to answers
-    gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
-    gpt_answer_clean_code = clean_text(gpt_answer_code)
+    gpt_answer_clean_code = clean_text(extract_dictionary_code(gpt_answer_dictionary))
 
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) == '""':
@@ -58,8 +49,7 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_na
                 [so_api_answer_id, 'Error : empty so_api_question_body']                         # TODO: check
             continue
 
-        str_so_api_answer_code = extract_html_code(so_api_answer_body)
-        str_so_api_answer_clean_code = clean_text(str_so_api_answer_code)
+        str_so_api_answer_clean_code = clean_text(extract_html_code(so_api_answer_body))
 
         # remove all whitespaces check for so_api empty code
         if "".join(str_so_api_answer_clean_code.split()) == '""':
@@ -68,7 +58,6 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_na
             continue
 
         cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
-        print(cloning_percentage)
 
         df.loc[len(df) - 1, [column_names[5], column_names[6], column_names[8], column_names[9]]] = \
             [so_api_answer_id, str_so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage]
@@ -117,19 +106,21 @@ def compare_process ():
             df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_body']                             #TODO: check
             continue
 
-        str_so_api_question = extract_html_text(so_api_question_body)
-        str_so_api_clean_question = clean_text(str_so_api_question)
+        str_so_api_clean_question = clean_text( extract_html_text(so_api_question_body))
 
         # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
         if "".join(str_so_api_clean_question.split()) == '""':
             df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question']                             # TODO: check
             continue
 
-        so_api_id_answers_json = []
-        for so_api_id_answers in so_api_answers_json.get("items", []):
-            if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
-                so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
-                break
+        #TODO test #might have a list including an empty list
+        so_api_id_answers_json = (list(so_api_id_answers.get(str(so_api_question_id), [])) for so_api_id_answers in so_api_answers_json.get("items", []) if int(list(so_api_id_answers.keys())[0]) == so_api_question_id )
+
+        # so_api_id_answers_json = []
+        # for so_api_id_answers in so_api_answers_json.get("items", []):
+        #     if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
+        #         so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
+        #         break
 
         if not so_api_id_answers_json :                                                                                                         # TODO: test
             df.loc[len(df), [column_names[0], column_names[1]]] = \
@@ -150,8 +141,7 @@ def compare_process ():
                         continue
 
                     gpt_question = get_conversation_question(gpt_conversation)
-                    str_gpt_question = json_data_to_str(gpt_question)
-                    str_gpt_clean_question = clean_text(str_gpt_question)
+                    str_gpt_clean_question = clean_text(json_data_to_str(gpt_question))
 
                     if "".join(str_gpt_clean_question.split()) == '""':
                         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
