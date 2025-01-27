@@ -1,15 +1,15 @@
-import json
+import ujson
 
 def json_data_to_str(json_data):
-    return json.dumps(json_data)
+    return ujson.dumps(json_data)
 
 def print_json_data(json_data):
-    print(json.dumps(json_data))
+    print(ujson.dumps(json_data))
 
 # get data from json file and return it in usable format, always include
 def get_json_data(file_path):
     with open(file_path, 'r') as file:
-        return json.load(file)
+        return ujson.load(file)
 
 # TODO: fix access safety issue with these functions
 def get_user_conversation(json_data, user, sharing, conversation):

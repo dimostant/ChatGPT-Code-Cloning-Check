@@ -1,5 +1,4 @@
-import json
-from collections import Counter
+import ujson
 
 from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions_advanced
 
@@ -7,15 +6,15 @@ from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, ge
 def craft_answers(max_pages): # question_ids):
     with open('answers.json', 'r') as a:
         try :
-            all_answers = json.load(a)
-        except :
-            print("file empty") #throws when not empty
+            all_answers = ujson.load(a)
+        except Exception as e :
+            print(f'file empty -> {e}') #throws when not empty
             all_answers = {}
 
     if not "items" in all_answers.keys():
         all_answers = { "items": [] }
 
-    with open('questions.json', 'r') as q: all_questions = json.load(q)
+    with open('questions.json', 'r') as q: all_questions = ujson.load(q)
     question_ids = list(set(item["question_id"] for item in all_questions["items"]))
     # TODO: check amd fix if set gives unsorted answer
 
@@ -39,7 +38,7 @@ def craft_answers(max_pages): # question_ids):
                     filtered_new_answers_json_arr = {q_id: filtered_id_new_answers}  # TODO: order ids getting in?
 
                     all_answers["items"].append(filtered_new_answers_json_arr)
-                    with open('answers.json', 'w') as a: json.dump(all_answers, a, indent=4)
+                    with open('answers.json', 'w') as a: ujson.dump(all_answers, a, indent=4)
                     #  TODO: leftover ids ( question_ids - unique_question_ids )
                     #  TODO: handle cut-off answers that were cut from last id
                     #  TODO: how to get total answers for a q_id to check
@@ -55,10 +54,10 @@ def craft_questions(max_pages):
     while has_more:
         with open('questions.json', 'r') as e:
             try :
-                all_questions = json.load(e)
-            except :
+                all_questions = ujson.load(e)
+            except Exception as e:
                 #empty non json content #throws when not empty
-                print("file empty")
+                print(f'file empty -> {e}')
                 all_questions = [] #TODO: this to { "items": [] } and test
 
         new_questions = get_api_questions_advanced(max_pages, page)
@@ -66,7 +65,7 @@ def craft_questions(max_pages):
         all_questions += new_questions["items"]
 
         with open('questions.json', 'w') as f:
-            json.dump(all_questions, f, indent=4) #for testing
+            ujson.dump(all_questions, f, indent=4) #for testing
 
         print(
             "has_more : ", new_questions["has_more"], "|",
@@ -100,4 +99,4 @@ max_pages = 50
 # # fetch questions
 craft_questions(max_pages)
 # # fetch answers
-# craft_answers(max_pages) # question_ids)
+# craft_answers(max_pages)
