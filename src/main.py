@@ -133,7 +133,7 @@ def compare_process ():
             for gpt_sharing_index, sharing_data in enumerate(source.get("ChatgptSharing", []), start = 1):
                 for gpt_conversation_index, gpt_conversation in enumerate(sharing_data.get("Conversations", []), start = 1):
                     gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index) + "|"+ str(gpt_conversation_index)
-                    print("id : " + str(gpt_num))
+                    print(f'question index: { so_api_question_index }, id:  { str(gpt_num) }')
 
                     if not gpt_conversation :
                         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
