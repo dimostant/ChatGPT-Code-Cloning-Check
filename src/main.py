@@ -42,7 +42,6 @@ def compare_questions(api_question, gpt_question):                              
 
 
 def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_names): #might change to answers
-    # TODO: complete and test if "remove" function provides code safe to be compared
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
     gpt_answer_clean_code = clean_text(gpt_answer_code)
 
@@ -119,7 +118,7 @@ def compare_process ():
     column_names = df.columns.tolist()
 
     # iterate through every so_api question
-    for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1 ) :
+    for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
         so_api_question_id = so_api_question["question_id"]
         so_api_question_body = so_api_question.get("body", [])
 
@@ -152,8 +151,8 @@ def compare_process ():
                 else :
                     # compare question with every DevGPT question
                     for gpt_source_index, source in enumerate(dev_gpt_json.get("Sources", []), start = 1):
-                        for gpt_sharing_index, sharing_data in source.get("ChatgptSharing", []):
-                            for gpt_conversation_index, gpt_conversation in sharing_data.get("Conversations", []):
+                        for gpt_sharing_index, sharing_data in enumerate(source.get("ChatgptSharing", []), start = 1):
+                            for gpt_conversation_index, gpt_conversation in enumerate(sharing_data.get("Conversations", []), start = 1):
                                 gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index) + "|"+ str(gpt_conversation_index)
                                 print("id : " + str(gpt_num))
 
