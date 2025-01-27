@@ -51,11 +51,11 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
 
     else :
         for so_api_answer in so_api_id_answers_json:
-            so_api_answer_id = so_api_answer["answer_id"]
+            so_api_answer_id = so_api_answer.get("answer_id", [])
             so_api_answer_body = so_api_answer.get("body", [])
             if not so_api_answer_body:                                                              # TODO: test
-                xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
-                    so_api_answer_id, 'Error : empty so_api_question_body']                         # TODO: check
+                xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = \
+                    [so_api_answer_id, 'Error : empty so_api_question_body']                         # TODO: check
 
             else :
                 str_so_api_answer_code = extract_html_code(so_api_answer_body)
@@ -63,7 +63,8 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(str_so_api_answer_clean_code.split()) == '""':
-                    xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = [so_api_answer_id, "Error : Empty so_api_answer_clean_code"] # right prefix?
+                    xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = \
+                        [so_api_answer_id, "Error : Empty so_api_answer_clean_code"] # right prefix?
 
                 else :
                     cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
@@ -109,7 +110,7 @@ def compare_process ():
 
     # iterate through every so_api question
     for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
-        so_api_question_id = so_api_question["question_id"]
+        so_api_question_id = so_api_question.get("question_id", [])
         so_api_question_body = so_api_question.get("body", [])
 
         if not so_api_question_body :
@@ -130,7 +131,8 @@ def compare_process ():
                         break
 
                 if not so_api_id_answers_json :                                                                                                         # TODO: test
-                    df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : question has no answers']                       # TODO: check
+                    df.loc[len(df), [column_names[0], column_names[1]]] = \
+                        [so_api_question_id, 'Error : question has no answers']                       # TODO: check
 
                 else :
                     # compare question with every DevGPT question
@@ -141,7 +143,8 @@ def compare_process ():
                                 print("id : " + str(gpt_num))
 
                                 if not gpt_conversation :
-                                    df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt conversation"]
+                                    df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
+                                        [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt conversation"]
 
                                 else :
                                     gpt_question = get_conversation_question(gpt_conversation)
@@ -149,7 +152,8 @@ def compare_process ():
                                     str_gpt_clean_question = clean_text(str_gpt_question)
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
-                                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"]
+                                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
+                                            [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"]
 
                                     else :
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
