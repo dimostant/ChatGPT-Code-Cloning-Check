@@ -5,8 +5,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
-from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, remove_non_utf8_chars, code_cloning_check
-from src.code_handling import remove_ansi_escape_sequences
+from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, clean_text, code_cloning_check
 
 sw = stopwords.words('english')
 
@@ -45,18 +44,13 @@ def compare_questions(api_question, gpt_question):                              
 def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_names): #might change to answers
     # TODO: complete and test if "remove" function provides code safe to be compared
     gpt_answer_code = extract_dictionary_code(gpt_answer_dictionary)
-    gpt_answer_clean_code = remove_non_utf8_chars(gpt_answer_code)
-    gpt_answer_clean_code = remove_ansi_escape_sequences(gpt_answer_clean_code)
-
-    # xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-    # column_names = xl.columns.tolist()
+    gpt_answer_clean_code = clean_text(gpt_answer_code)
 
     # remove all whitespaces and check for gpt empty code
     if "".join(gpt_answer_clean_code.split()) == '""':                                             #TODO: check?
         xl.loc[len(xl) - 1, [column_names[6]]] = [ # right prefix?
             "Error : Empty gpt_answer_clean_code"
         ]
-        #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
     else :
         for so_api_answer in so_api_id_answers_json:
@@ -66,32 +60,25 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
                 xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
                     so_api_answer_id, 'Error : empty so_api_question_body'                         # TODO: check
                 ]
-                #xl.to_excel('results.xlsx', index=False)
 
             else :
                 str_so_api_answer_code = extract_html_code(so_api_answer_body)
-                str_so_api_answer_clean_code = remove_non_utf8_chars(str_so_api_answer_code)
-                str_so_api_answer_clean_code = remove_ansi_escape_sequences(str_so_api_answer_clean_code)
+                str_so_api_answer_clean_code = clean_text(str_so_api_answer_code)
 
                 # remove all whitespaces check for so_api empty code
                 if "".join(str_so_api_answer_clean_code.split()) == '""':
                     xl.loc[len(xl) - 1, [column_names[5], column_names[8]]] = [  # right prefix?
                         so_api_answer_id, "Error : Empty so_api_answer_clean_code"
                     ]
-                    #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                 else :
                     cloning_percentage = code_cloning_check(gpt_answer_clean_code, str_so_api_answer_clean_code)
                     print(cloning_percentage)
 
-                    #xl = pd.read_excel(os.path.join('..', 'results.xlsx'))
-                    #column_names = xl.columns.tolist()
-
                     try :
                         xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
                             so_api_answer_id, str_so_api_answer_clean_code
                         ]
-                        #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                     except :
                         xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [
@@ -107,7 +94,6 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
                         xl.loc[len(xl) - 1, [column_names[8], column_names[9]]] = [
                             gpt_answer_clean_code, cloning_percentage
                         ]
-                        #xl.to_excel(os.path.join('..', 'results.xlsx'), index=False)
 
                     except :
                         xl.loc[len(xl) - 1, [ column_names[8], column_names[9]]] = [
@@ -123,52 +109,34 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, xl, column_na
 
 def compare_process ():
     # read all DevGPT conversations
-    dev_gpt_json = get_json_data(
-        'ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json'
-    )
-
+    dev_gpt_json = get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json')
     # read all questions from db file
-    so_api_questions_json = get_json_data(
-        os.path.join('StackOverflow_api_db', 'db', 'questions.json')
-    )
-
+    so_api_questions_json = get_json_data(os.path.join('StackOverflow_api_db', 'db', 'questions.json'))
     # read all answers from db file
-    so_api_answers_json = get_json_data(
-        os.path.join('StackOverflow_api_db', 'db', 'answers.json')
-    )
+    so_api_answers_json = get_json_data(os.path.join('StackOverflow_api_db', 'db', 'answers.json'))
 
     df = pd.read_excel('results.xlsx')
     column_names = df.columns.tolist()
 
-    so_api_question_num = 0
-    # break_value = False # remove
     # iterate through every so_api question
-    for so_api_question in so_api_questions_json.get("items", []):
+    for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1 ) :
         so_api_question_id = so_api_question["question_id"]
         so_api_question_body = so_api_question.get("body", [])
 
         if not so_api_question_body :
-            # df = pd.read_excel('results.xlsx')
-            # column_names = df.columns.tolist()
             df.loc[len(df), [column_names[0], column_names[1]]] = [
                 so_api_question_id, 'Error : empty so_api_question_body'                             #TODO: check
             ]
-            # df.to_excel('results.xlsx', index=False)
 
         else :
-            so_api_question_num = so_api_question_num + 1
             str_so_api_question = extract_html_text(so_api_question_body)
-            str_so_api_clean_question = remove_ansi_escape_sequences(str_so_api_question)
-            str_so_api_clean_question = remove_non_utf8_chars(str_so_api_clean_question)
+            str_so_api_clean_question = clean_text(str_so_api_question)
 
             # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
             if "".join(str_so_api_clean_question.split()) == '""':
-                # df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-                # column_names = df.columns.tolist()
                 df.loc[len(df), [column_names[0], column_names[1]]] = [
                     so_api_question_id, 'Error : empty so_api_question'                             # TODO: check
                 ]
-                # df.to_excel('results.xlsx', index=False)
             else:
                 so_api_id_answers_json = []
                 for so_api_id_answers in so_api_answers_json.get("items", []):
@@ -177,48 +145,34 @@ def compare_process ():
                         break
 
                 if not so_api_id_answers_json :                                                     # TODO: test
-                    # df = pd.read_excel('results.xlsx')  # are two reads in each if optimal?
-                    # column_names = df.columns.tolist()
                     df.loc[len(df), [column_names[0], column_names[1]]] = [
                         so_api_question_id, 'Error : question has no answers'                     # TODO: check
                     ]
-                    # df.to_excel('results.xlsx', index=False)
+
                 else :
                     # compare question with every DevGPT question
-                    gpt_source_num = 0
-                    for source in dev_gpt_json.get("Sources", []):
-                        gpt_source_num = gpt_source_num + 1
-                        gpt_sharing_num = 0
-                        for sharing_data in source.get("ChatgptSharing", []):
-                            gpt_sharing_num = gpt_sharing_num + 1
-                            gpt_conversation_num = 0
-                            for gpt_conversation in sharing_data.get("Conversations", []):
-                                gpt_conversation_num = gpt_conversation_num + 1
-                                gpt_num = str(gpt_source_num) + "|" + str(gpt_sharing_num) + "|"+ str(gpt_conversation_num)
+                    for gpt_source_index, source in enumerate(dev_gpt_json.get("Sources", []), start = 1):
+                        for gpt_sharing_index, sharing_data in source.get("ChatgptSharing", []):
+                            for gpt_conversation_index, gpt_conversation in sharing_data.get("Conversations", []):
+                                gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index) + "|"+ str(gpt_conversation_index)
                                 print("id : " + str(gpt_num))
 
-                                # df = pd.read_excel('results.xlsx')
-                                # column_names = df.columns.tolist()
-
-                                #TODO: log gtp problems by Source/Sharing_data/conversation
                                 if not gpt_conversation :
                                     df.loc[len(df), [column_names[0], column_names[1], column_names[2],
                                                      column_names[3]]] = [
                                         so_api_question_id, str_so_api_clean_question, gpt_num,
                                         "empty gpt conversation"
                                     ]
-                                    # df.to_excel('results.xlsx', index=False)
+
                                 else :
                                     gpt_question = get_conversation_question(gpt_conversation)
                                     str_gpt_question = json_data_to_str(gpt_question)
-                                    str_gpt_clean_question = remove_non_utf8_chars(str_gpt_question)
-                                    str_gpt_clean_question = remove_ansi_escape_sequences(str_gpt_clean_question)
+                                    str_gpt_clean_question = clean_text(str_gpt_question)
 
                                     if "".join(str_gpt_clean_question.split()) == '""':
                                         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = [
                                             so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"
                                         ]
-                                        # df.to_excel('results.xlsx', index=False)
 
                                     else :
                                         questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
@@ -239,12 +193,11 @@ def compare_process ():
 
                                         except:
                                             df.loc[len(df), [column_names[0], column_names[1]]] = [
-                                                so_api_question_num, "Error :  so_api_question not writable"
+                                                so_api_question_index, "Error :  so_api_question not writable"
                                             ]
-                                            # df.to_excel('results.xlsx', index=False)
 
                                             print(
-                                                f'Error at -> so_api_question_num : {so_api_question_num} |\n'
+                                                f'Error at -> so_api_question_index : {so_api_question_index} |\n'
                                                   + str_so_api_clean_question
                                             )
 
@@ -264,17 +217,17 @@ def compare_process ():
                                             df.loc[len(df) - 1, [column_names[2], column_names[3]]] = [
                                                 gpt_num, "Error :  gpt clean question not writable"
                                             ]
-                                            # df.to_excel('results.xlsx',  index=False)
 
                                             print(
-                                                f'Error at -> gpt_conversation_num :' + gpt_num
+                                                f'Error at -> gpt_conversation_index :' + gpt_num
                                                   + '|\n' + str_gpt_clean_question
                                             )
 
-        #                 if gpt_source_num >= 18:
+        #                 if gpt_source_index >= 18:
         #                     break
         # break
-    # df.to_excel('results.xlsx', index=False)
+
+    df.to_excel('results.xlsx', index=False)
 
 # # UNCOMMENT THIS!!!
 # if os.path.basename(os.path.normpath(os.getcwd())) == 'src':

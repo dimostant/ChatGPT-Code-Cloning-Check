@@ -3,7 +3,7 @@ import os, time
 
 from src.ChatGBT_db.devgpt_chats import get_json_data, get_user_conversation, get_conversation_question, json_data_to_str
 # numpy as np
-from src.code_handling import remove_ansi_escape_sequences, remove_non_utf8_chars
+from src.code_handling import clean_text, clean_text
 
 os.remove('test.xlsx')
 os.popen("copy " + str('testtmp.xlsx') + " " + str('test.xlsx'))
@@ -45,8 +45,8 @@ dev_gpt_json = get_json_data(
 text = get_conversation_question( get_user_conversation(dev_gpt_json, 10, 0, 3) )
 #print(text)
 str_text = json_data_to_str(text)
-clean_text = remove_non_utf8_chars(str_text)
-clean_text = remove_ansi_escape_sequences(clean_text)
+clean_text = clean_text(str_text)
+clean_text = clean_text(clean_text)
 df.loc[len(df) - 1] = clean_text
 # df.loc[len(df) - 1] = ["ONNX", 2]
 
