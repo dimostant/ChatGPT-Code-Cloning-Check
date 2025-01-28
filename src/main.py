@@ -114,13 +114,11 @@ def compare_process ():
             continue
 
         #TODO test #might have a list including an empty list
-        so_api_id_answers_json = (list(so_api_id_answers.get(str(so_api_question_id), [])) for so_api_id_answers in so_api_answers_json.get("items", []) if int(list(so_api_id_answers.keys())[0]) == so_api_question_id )
-
-        # so_api_id_answers_json = []
-        # for so_api_id_answers in so_api_answers_json.get("items", []):
-        #     if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
-        #         so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
-        #         break
+        so_api_id_answers_json = []
+        for so_api_id_answers in so_api_answers_json.get("items", []):
+            if int(list(so_api_id_answers.keys())[0]) == so_api_question_id:
+                so_api_id_answers_json = so_api_id_answers[str(so_api_question_id)]
+                break
 
         if not so_api_id_answers_json :                                                                                                         # TODO: test
             df.loc[len(df), [column_names[0], column_names[1]]] = \
