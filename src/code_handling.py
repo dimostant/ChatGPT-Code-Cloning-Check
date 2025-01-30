@@ -1,9 +1,6 @@
-import os
 import re
 import bs4
 import html
-import subprocess
-import tempfile
 from src.ChatGBT_db.devgpt_chats import json_data_to_str
 
 
@@ -55,49 +52,3 @@ def clean_text(text):
     ansi_escape_text.sub('', cleaned_text)
 
     return  ansi_escape_text.sub('', cleaned_text)
-
-def calculate_clone_percentage(simian_output):
-    duplicate_lines_line = re.search(r'Found \d+ duplicate lines in \d+ blocks in \d+ files', simian_output)
-    if not duplicate_lines_line:
-        duplicate_lines = 0
-    else:
-        duplicate_lines = int(re.search(r'\d+', duplicate_lines_line.group()).group())
-
-    total_lines_line = re.search(r'Processed a total of \d+ significant \((\d+) raw\) lines in \d+ files',
-                                 simian_output)
-    if not total_lines_line:
-        total_lines = 0
-    else:
-        total_lines = int(re.search(r'\d+', total_lines_line.group()).group())
-
-    if total_lines != 0:
-        return (duplicate_lines / total_lines) * 100
-
-def code_cloning_check(gpt_answer_code, so_api_answer_code):
-    # print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
-
-    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code1_file, \
-         tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code2_file:
-
-        code1_file.write(gpt_answer_code.encode('ascii'))
-        code2_file.write(so_api_answer_code.encode('ascii'))
-
-        code1_file.seek(0)
-        code2_file.seek(0)
-
-        code1_file.close()
-        code2_file.close()
-
-    try:
-        simian = subprocess.run(
-            ["java", "-jar", "../simian-academic/simian-4.0.0/simian-4.0.0.jar", code1_file.name, code2_file.name],
-            text=True, capture_output=True # check=True
-        )
-
-        simian_output = ''.join(simian.stdout.splitlines(keepends=True)[4:-1])
-
-    finally:
-        os.remove(code1_file.name)
-        os.remove(code2_file.name)
-
-    return calculate_clone_percentage(simian_output)

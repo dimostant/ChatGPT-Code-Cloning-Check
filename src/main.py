@@ -1,16 +1,64 @@
 import os
-
+import subprocess
+import tempfile
+import re
 import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from sklearn.feature_extraction.text import CountVectorizer
-
-from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
-from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, clean_text, code_cloning_check
 from src.ChatGBT_db.devgpt_chats import get_sharing_title
+from sklearn.feature_extraction.text import CountVectorizer
+from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
+from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, clean_text
 
 STOPWORDS = stopwords.words('english')
+
+
+def calculate_clone_percentage(simian_output):
+    duplicate_lines_line = re.search(r'Found \d+ duplicate lines in \d+ blocks in \d+ files', simian_output)
+    if not duplicate_lines_line:
+        duplicate_lines = 0
+    else:
+        duplicate_lines = int(re.search(r'\d+', duplicate_lines_line.group()).group())
+
+    total_lines_line = re.search(r'Processed a total of \d+ significant \((\d+) raw\) lines in \d+ files',
+                                 simian_output)
+    if not total_lines_line:
+        total_lines = 0
+    else:
+        total_lines = int(re.search(r'\d+', total_lines_line.group()).group())
+
+    if total_lines != 0:
+        return (duplicate_lines / total_lines) * 100
+
+def code_cloning_check(gpt_answer_code, so_api_answer_code):
+    # print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
+
+    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code1_file, \
+         tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code2_file:
+
+        code1_file.write(gpt_answer_code.encode('ascii'))
+        code2_file.write(so_api_answer_code.encode('ascii'))
+
+        code1_file.seek(0)
+        code2_file.seek(0)
+
+        code1_file.close()
+        code2_file.close()
+
+    try:
+        simian = subprocess.run(
+            ["java", "-jar", "../simian-academic/simian-4.0.0/simian-4.0.0.jar", code1_file.name, code2_file.name],
+            text=True, capture_output=True # check=True
+        )
+
+        simian_output = ''.join(simian.stdout.splitlines(keepends=True)[4:-1])
+
+    finally:
+        os.remove(code1_file.name)
+        os.remove(code2_file.name)
+
+    return calculate_clone_percentage(simian_output)
 
 def preprocess_question(question):
     """Tokenizes and removes stopwords from a question."""
@@ -101,11 +149,14 @@ def compare_process ():
 
     # iterate through every so_api question
     for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
+        if so_api_question_index > 50 :
+            break
+
         so_api_question_id = so_api_question.get("question_id", [])
         so_api_question_title = so_api_question.get("title", [])
 
         if not so_api_question_title :
-            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_title']                             #TODO: check
+            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : no so_api_question_title']                             #TODO: check
             continue
 
         str_so_api_clean_question = clean_text(so_api_question_title)
@@ -136,8 +187,8 @@ def compare_process ():
                 break
 
         if not so_api_id_answers_json :                                                                                                         # TODO: test
-            df.loc[len(df), [column_names[0], column_names[1]]] = \
-                [so_api_question_id, 'Error : question has no answers']                       # TODO: check
+            df.loc[len(df), [column_names[0], column_names[1], column_names[6]]] = \
+                [so_api_question_id, str_so_api_clean_question, 'Error : question has no answers']                       # TODO: check
             continue
 
 

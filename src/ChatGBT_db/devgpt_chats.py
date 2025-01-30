@@ -1,5 +1,6 @@
 import ujson
 
+
 def json_data_to_str(json_data):
     return ujson.dumps(json_data)
 

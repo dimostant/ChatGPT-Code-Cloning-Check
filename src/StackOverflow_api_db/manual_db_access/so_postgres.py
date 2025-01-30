@@ -1,5 +1,6 @@
 import psycopg2
 
+
 def get_so_postgres_question():
     # Establish a connection to the PostgreSQL database
     connection = psycopg2.connect(

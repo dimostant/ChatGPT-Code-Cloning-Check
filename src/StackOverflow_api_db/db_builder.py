@@ -1,6 +1,6 @@
 import ujson
-
 from src.StackOverflow_api_db.manual_db_access.so_api import get_api_answers, get_api_questions_advanced
+
 
 #Imports array of json answers, under the corresponding question_id as key
 def craft_answers(max_pages): # question_ids):
