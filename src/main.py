@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
 from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, clean_text, code_cloning_check
+from src.ChatGBT_db.devgpt_chats import get_sharing_title
 
 STOPWORDS = stopwords.words('english')
 
@@ -88,7 +89,8 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_na
 
 def compare_process ():
     # read all DevGPT conversations
-    dev_gpt_json = get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json')
+    # dev_gpt_json = get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json')
+    dev_gpt_json = get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_230826_commit_sharings.json')
     # read all questions from db file
     so_api_questions_json = get_json_data(os.path.join('StackOverflow_api_db', 'db', 'questions.json'))
     # read all answers from db file
@@ -100,18 +102,31 @@ def compare_process ():
     # iterate through every so_api question
     for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
         so_api_question_id = so_api_question.get("question_id", [])
-        so_api_question_body = so_api_question.get("body", [])
+        so_api_question_title = so_api_question.get("title", [])
 
-        if not so_api_question_body :
-            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_body']                             #TODO: check
+        if not so_api_question_title :
+            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_title']                             #TODO: check
             continue
 
-        str_so_api_clean_question = clean_text( extract_html_text(so_api_question_body))
+        str_so_api_clean_question = clean_text(so_api_question_title)
 
         # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
         if "".join(str_so_api_clean_question.split()) == '""':
-            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question']                             # TODO: check
+            df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_title']                             # TODO: check
             continue
+
+        # so_api_question_body = so_api_question.get("body", [])
+        #
+        # if not so_api_question_body :
+        #     df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question_body']                             #TODO: check
+        #     continue
+        #
+        # str_so_api_clean_question = clean_text( extract_html_text(so_api_question_body))
+        #
+        # # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
+        # if "".join(str_so_api_clean_question.split()) == '""':
+        #     df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, 'Error : empty so_api_question']                             # TODO: check
+        #     continue
 
         #TODO test #might have a list including an empty list
         so_api_id_answers_json = []
@@ -128,33 +143,66 @@ def compare_process ():
 
         # compare question with every DevGPT question
         for gpt_source_index, source in enumerate(dev_gpt_json.get("Sources", []), start = 1):
+            #limit sources number
+            if gpt_source_index > 20 :
+                break
+
             for gpt_sharing_index, sharing_data in enumerate(source.get("ChatgptSharing", []), start = 1):
-                for gpt_conversation_index, gpt_conversation in enumerate(sharing_data.get("Conversations", []), start = 1):
-                    gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index) + "|"+ str(gpt_conversation_index)
-                    print(f'question index: { so_api_question_index }, id:  { str(gpt_num) }')
+                gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index)
+                print(f'question index: {so_api_question_index}, id:  {str(gpt_num)}')
 
-                    if not gpt_conversation :
-                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
-                            [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt conversation"]
-                        continue
+                if not sharing_data :
+                    df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
+                        [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt conversation"]
+                    continue
 
-                    gpt_question = get_conversation_question(gpt_conversation)
-                    str_gpt_clean_question = clean_text(json_data_to_str(gpt_question))
+                gpt_sharing_title = get_sharing_title(sharing_data)
+                str_gpt_clean_title = clean_text(json_data_to_str(gpt_sharing_title))
 
-                    if "".join(str_gpt_clean_question.split()) == '""':
-                        df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
-                            [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"]
-                        continue
+                if "".join(str_gpt_clean_title.split()) == '""':
+                    df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
+                        [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt sharing title"]
+                    continue
 
-                    questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
+                questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_title)
 
-                    df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3], column_names[4],column_names[7]]] = \
-                        [so_api_question_id, str_so_api_clean_question, gpt_num, str_gpt_clean_question, questions_similarity, gpt_num]
+                df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3], column_names[4],column_names[7]]] = \
+                    [so_api_question_id, str_so_api_clean_question, gpt_num, str_gpt_clean_title, questions_similarity, gpt_num]
 
-                    if 0.7 <= questions_similarity < 1:
+                # if 0.7 <= questions_similarity < 1:
+                if 0.5 <= questions_similarity < 1:
+                    for gpt_conversation_index, gpt_conversation in enumerate(sharing_data.get("Conversations", []), start=1):
                         gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                         if gpt_answer_dictionary:                                   # TODO: test
                             compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
+
+                # for gpt_conversation_index, gpt_conversation in enumerate(sharing_data.get("Conversations", []), start = 1):
+                #     gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index) + "|"+ str(gpt_conversation_index)
+                #     print(f'question index: { so_api_question_index }, id:  { str(gpt_num) }')
+                #
+                #     if not gpt_conversation :
+                #         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
+                #             [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt conversation"]
+                #         continue
+                #
+                #     gpt_question = get_conversation_question(gpt_conversation)
+                #     str_gpt_clean_question = clean_text(json_data_to_str(gpt_question))
+                #
+                #     if "".join(str_gpt_clean_question.split()) == '""':
+                #         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
+                #             [so_api_question_id, str_so_api_clean_question, gpt_num, "empty gpt question"]
+                #         continue
+                #
+                #     questions_similarity = compare_questions(str_so_api_clean_question, str_gpt_clean_question)
+                #
+                #     df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3], column_names[4],column_names[7]]] = \
+                #         [so_api_question_id, str_so_api_clean_question, gpt_num, str_gpt_clean_question, questions_similarity, gpt_num]
+                #
+                #     # if 0.7 <= questions_similarity < 1:
+                #     if 0.5 <= questions_similarity < 1:
+                #         gpt_answer_dictionary = get_conversation_code(gpt_conversation)
+                #         if gpt_answer_dictionary:                                   # TODO: test
+                #             compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
 
 
                                 # try :

@@ -63,7 +63,6 @@ def calculate_clone_percentage(simian_output):
     else:
         duplicate_lines = int(re.search(r'\d+', duplicate_lines_line.group()).group())
 
-    print(duplicate_lines)
     total_lines_line = re.search(r'Processed a total of \d+ significant \((\d+) raw\) lines in \d+ files',
                                  simian_output)
     if not total_lines_line:
@@ -71,13 +70,11 @@ def calculate_clone_percentage(simian_output):
     else:
         total_lines = int(re.search(r'\d+', total_lines_line.group()).group())
 
-    print(total_lines)
-
     if total_lines != 0:
         return (duplicate_lines / total_lines) * 100
 
 def code_cloning_check(gpt_answer_code, so_api_answer_code):
-    print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
+    # print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
 
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code1_file, \
          tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code2_file:

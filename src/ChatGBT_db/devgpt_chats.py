@@ -12,6 +12,10 @@ def get_json_data(file_path):
         return ujson.load(file)
 
 # TODO: fix access safety issue with these functions
+def get_sharing_title(sharing):
+    sharing_title = sharing.get("Title", [])
+    return sharing_title
+
 def get_user_conversation(json_data, user, sharing, conversation):
     user_conversation = json_data["Sources"][user]["ChatgptSharing"][sharing]["Conversations"][conversation]
     return user_conversation
