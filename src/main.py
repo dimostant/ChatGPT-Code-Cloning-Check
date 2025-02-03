@@ -1,17 +1,15 @@
 import os
+import re
 import subprocess
 import tempfile
-import re
 import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from src.ChatGBT_db.devgpt_chats import get_sharing_title
 from sklearn.feature_extraction.text import CountVectorizer
-from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, get_conversation_question, json_data_to_str
-from code_handling import extract_html_code, extract_html_text, extract_dictionary_code, clean_text
-
-STOPWORDS = stopwords.words('english')
+from ChatGBT_db.devgpt_chats import get_json_data, get_conversation_code, json_data_to_str, get_conversation_question
+from code_handling import extract_dictionary_code, clean_text, extract_html_code, extract_html_text
 
 
 def calculate_clone_percentage(simian_output):
@@ -21,8 +19,7 @@ def calculate_clone_percentage(simian_output):
     else:
         duplicate_lines = int(re.search(r'\d+', duplicate_lines_line.group()).group())
 
-    total_lines_line = re.search(r'Processed a total of \d+ significant \((\d+) raw\) lines in \d+ files',
-                                 simian_output)
+    total_lines_line = re.search(r'Processed a total of \d+ significant \((\d+) raw\) lines in \d+ files', simian_output)
     if not total_lines_line:
         total_lines = 0
     else:
@@ -32,7 +29,7 @@ def calculate_clone_percentage(simian_output):
         return (duplicate_lines / total_lines) * 100
 
 def code_cloning_check(gpt_answer_code, so_api_answer_code):
-    # print("\ncomparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
+    # print("\n comparing answers :\n", gpt_answer_code.replace("\n", " "), "\nand :\n", so_api_answer_code.replace("\n", " "))
 
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code1_file, \
          tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as code2_file:
@@ -111,45 +108,24 @@ def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_na
         df.loc[len(df) - 1, [column_names[5], column_names[6], column_names[8], column_names[9]]] = \
             [so_api_answer_id, str_so_api_answer_clean_code, gpt_answer_clean_code, cloning_percentage]
 
-        # try :
-        #     xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [so_api_answer_id, str_so_api_answer_clean_code]
-
-        # except Exception as e:
-        #     xl.loc[len(xl) - 1, [column_names[5], column_names[6]]] = [so_api_answer_id, "Error :  so_api_answer_clean_code not writable"]
-        #
-        #     print(
-        #         f'Exception : {e} \nError at ->  so_api_answer_id : { so_api_answer_id} |\n'
-        #         + str_so_api_answer_clean_code
-        #     )
-
-        # try :
-        #     xl.loc[len(xl) - 1, [column_names[8], column_names[9]]] = [gpt_answer_clean_code, cloning_percentage]
-
-        # except Exception as e:
-        #     xl.loc[len(xl) - 1, [ column_names[8], column_names[9]]] = ["Error :  gpt clean question not writable", cloning_percentage]
-        #
-        #     print(
-        #         f'Exception : {e} \nError at -> gpt_conversation_num : {xl.iloc[len(xl) - 1, column_names[7]]}'
-        #         + '|\n' + gpt_answer_clean_code
-        #     )
-
-
-
-def compare_process ():
+def compare_process(api_question_depth, gpt_source_depth, import_file, export_file):
     # read all DevGPT conversations
-    # dev_gpt_json = get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_235320_discussion_sharings.json')
-    dev_gpt_json = get_json_data('ChatGBT_db/DevGPT/snapshot_20231012/20231012_230826_commit_sharings.json')
+    dev_gpt_json = get_json_data(import_file)
     # read all questions from db file
     so_api_questions_json = get_json_data(os.path.join('StackOverflow_api_db', 'db', 'questions.json'))
     # read all answers from db file
     so_api_answers_json = get_json_data(os.path.join('StackOverflow_api_db', 'db', 'answers.json'))
 
-    df = pd.read_excel('results.xlsx')
+    if os.path.isfile(export_file) :
+        os.remove(export_file)
+    os.popen("copy " + os.path.join('results', 'resultsTemp.xlsx') + " " + export_file)
+
+    df = pd.read_excel(os.path.join('results', 'resultsTemp.xlsx'))
     column_names = df.columns.tolist()
 
     # iterate through every so_api question
     for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
-        if so_api_question_index > 50 :
+        if so_api_question_index > api_question_depth :
             break
 
         so_api_question_id = so_api_question.get("question_id", [])
@@ -191,11 +167,10 @@ def compare_process ():
                 [so_api_question_id, str_so_api_clean_question, 'Error : question has no answers']                       # TODO: check
             continue
 
-
         # compare question with every DevGPT question
         for gpt_source_index, source in enumerate(dev_gpt_json.get("Sources", []), start = 1):
             #limit sources number
-            if gpt_source_index > 20 :
+            if gpt_source_index > gpt_source_depth :
                 break
 
             for gpt_sharing_index, sharing_data in enumerate(source.get("ChatgptSharing", []), start = 1):
@@ -229,7 +204,7 @@ def compare_process ():
 
                 # for gpt_conversation_index, gpt_conversation in enumerate(sharing_data.get("Conversations", []), start = 1):
                 #     gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index) + "|"+ str(gpt_conversation_index)
-                #     print(f'question index: { so_api_question_index }, id:  { str(gpt_num) }')
+                #     print(f 'question index: { so_api_question_index }, id:  { gpt_num}')
                 #
                 #     if not gpt_conversation :
                 #         df.loc[len(df), [column_names[0], column_names[1], column_names[2], column_names[3]]] = \
@@ -254,50 +229,28 @@ def compare_process ():
                 #         gpt_answer_dictionary = get_conversation_code(gpt_conversation)
                 #         if gpt_answer_dictionary:                                   # TODO: test
                 #             compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
-
-
-                                # try :
-                                #     df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_id, str_so_api_clean_question]
-                                #     df.to_excel('results.xlsx', index=False)
-                                #
-                                # except Exception as e:
-                                #     df.loc[len(df), [column_names[0], column_names[1]]] = [so_api_question_index, "Error :  so_api_question not writable"]
-                                #
-                                #     print(
-                                #         f'Exception : {e} \nError at -> so_api_question_index : {so_api_question_index} |\n'
-                                #           + str_so_api_clean_question
-                                #     )
-                                #
-                                # try :
-                                #     df.loc[len(df) - 1, [column_names[2], column_names[3], column_names[4], column_names[7]]] = [gpt_num, str_gpt_clean_question, questions_similarity, gpt_num]
-                                #     df.to_excel('results.xlsx', index=False)
-                                #
-                                #     if 0.7 <= questions_similarity < 1:
-                                #         gpt_answer_dictionary = get_conversation_code(gpt_conversation)
-                                #         if gpt_answer_dictionary:                                   # TODO: test
-                                #             compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names)
-                                #
-                                # except Exception as e:
-                                #     df.loc[len(df) - 1, [column_names[2], column_names[3]]] = [gpt_num, "Error :  gpt clean question not writable"]
-                                #
-                                #     print(
-                                #         f'Exception : {e} \nError at -> gpt_conversation_index :' + gpt_num
-                                #           + '|\n' + str_gpt_clean_question
-                                #     )
-
         #                 if gpt_source_index >= 18:
         #                     break
+        # print('prevent warning')
         # break
 
-    df.to_excel('results.xlsx', index=False)
+    df.to_excel(export_file, index=False)
 
-# # UNCOMMENT THIS!!!
-# if os.path.basename(os.path.normpath(os.getcwd())) == 'src':
-#     os.chdir('..')
 
-os.remove('results.xlsx')
-os.popen("copy " + str('resultsC.xlsx') + " " + str('results.xlsx'))
-compare_process()
+STOPWORDS = stopwords.words('english')
+
+filepath = 'ChatGBT_db/DevGPT/snapshot_20231012'
+files = [
+    '/20231012_230826_commit_sharings.json',
+    '/20231012_232232_hn_sharings.json',
+    '/20231012_233628_pr_sharings.json',
+    '/20231012_234250_file_sharings.json',
+    '/20231012_235128_issue_sharings.json',
+    '/20231012_235320_discussion_sharings.json',
+]
+
+for file in files:
+    compare_process(50, 20, filepath + file, 'results/' + file[17:-5] + '_results.xlsx')
 
 
 
