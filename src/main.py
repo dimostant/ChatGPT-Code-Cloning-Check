@@ -125,7 +125,8 @@ def compare_process(api_question_depth, gpt_source_depth, import_file, export_fi
 
     # iterate through every so_api question
     for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
-        if so_api_question_index > api_question_depth :
+        # limit questions number
+        if so_api_question_index > api_question_depth != -1:
             break
 
         so_api_question_id = so_api_question.get("question_id", [])
@@ -170,7 +171,7 @@ def compare_process(api_question_depth, gpt_source_depth, import_file, export_fi
         # compare question with every DevGPT question
         for gpt_source_index, source in enumerate(dev_gpt_json.get("Sources", []), start = 1):
             #limit sources number
-            if gpt_source_index > gpt_source_depth :
+            if gpt_source_index > gpt_source_depth != -1 :
                 break
 
             for gpt_sharing_index, sharing_data in enumerate(source.get("ChatgptSharing", []), start = 1):
@@ -250,7 +251,7 @@ files = [
 ]
 
 for file in files:
-    compare_process(50, 20, filepath + file, 'results/' + file[17:-5] + '_results.xlsx')
+    compare_process(-1, -1, filepath + file, 'results/' + file[17:-5] + '_results.xlsx')
 
 
 
