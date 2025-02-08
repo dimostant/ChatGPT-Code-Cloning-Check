@@ -78,7 +78,6 @@ def compare_questions(api_question, gpt_question):
     # Return cosine similarity, handle zero-vector edge case
     return numerator / denominator if denominator != 0 else 0.0
 
-
 def compare_answers(so_api_id_answers_json, gpt_answer_dictionary, df, column_names): #might change to answers
     gpt_answer_clean_code = clean_text(extract_dictionary_code(gpt_answer_dictionary))
 
@@ -126,8 +125,12 @@ def compare_process(api_question_depth, gpt_source_depth, import_file, export_fi
     # iterate through every so_api question
     for so_api_question_index, so_api_question in enumerate(so_api_questions_json.get("items", []), start = 1) :
         # limit questions number
-        if so_api_question_index > api_question_depth != -1:
-            break
+        # if so_api_question_index > api_question_depth != -1:
+        #     break
+
+        # if so_api_question_index < api_question_depth != -1:
+        #     continue
+
 
         so_api_question_id = so_api_question.get("question_id", [])
         so_api_question_title = so_api_question.get("title", [])
@@ -137,6 +140,8 @@ def compare_process(api_question_depth, gpt_source_depth, import_file, export_fi
             continue
 
         str_so_api_clean_question = clean_text(so_api_question_title)
+        print(str_so_api_clean_question)
+        print("nnnn")
 
         # leaving this block here, compare_answers only takes this as parameter and exp calls are minimum
         if "".join(str_so_api_clean_question.split()) == '""':
@@ -171,8 +176,8 @@ def compare_process(api_question_depth, gpt_source_depth, import_file, export_fi
         # compare question with every DevGPT question
         for gpt_source_index, source in enumerate(dev_gpt_json.get("Sources", []), start = 1):
             #limit sources number
-            if gpt_source_index > gpt_source_depth != -1 :
-                break
+            # if gpt_source_index > gpt_source_depth != -1 :
+            #     break
 
             for gpt_sharing_index, sharing_data in enumerate(source.get("ChatgptSharing", []), start = 1):
                 gpt_num = str(gpt_source_index) + "|" + str(gpt_sharing_index)
@@ -234,7 +239,7 @@ def compare_process(api_question_depth, gpt_source_depth, import_file, export_fi
         #                     break
         # print('prevent warning')
         # break
-
+    print(export_file)
     df.to_excel(export_file, index=False)
 
 

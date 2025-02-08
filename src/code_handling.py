@@ -46,7 +46,7 @@ def clean_text(text):
         decoded_text = unescaped_text  # Fall back to original if decoding fails
 
     # Use regex to remove non-ASCII and non-basic Unicode characters
-    cleaned_text = re.sub(r'[^\x00-\x7F]+', '', decoded_text)
+    cleaned_text = re.sub(r'[\x00-\x1F\x7F-\x9F]+', '', decoded_text)
 
     ansi_escape_text = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     ansi_escape_text.sub('', cleaned_text)
